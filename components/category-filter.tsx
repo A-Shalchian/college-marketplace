@@ -1,14 +1,14 @@
 "use client";
 
-import { Book, Laptop, Sofa, Shirt, Bike, MoreHorizontal } from "lucide-react";
+import { Sparkles, Book, Laptop, Armchair, Shirt, Bike, MoreHorizontal } from "lucide-react";
 
-const categories = [
-  { id: "all", label: "All", icon: null },
+export const categories = [
+  { id: "all", label: "For You", icon: Sparkles },
   { id: "textbooks", label: "Textbooks", icon: Book },
   { id: "electronics", label: "Electronics", icon: Laptop },
-  { id: "furniture", label: "Furniture", icon: Sofa },
-  { id: "clothing", label: "Clothing", icon: Shirt },
-  { id: "transportation", label: "Transportation", icon: Bike },
+  { id: "furniture", label: "Furniture", icon: Armchair },
+  { id: "clothing", label: "Fashion", icon: Shirt },
+  { id: "transportation", label: "Transport", icon: Bike },
   { id: "other", label: "Other", icon: MoreHorizontal },
 ];
 
@@ -19,28 +19,31 @@ interface CategoryFilterProps {
 
 export function CategoryFilter({ selected, onSelect }: CategoryFilterProps) {
   return (
-    <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-      {categories.map((category) => {
-        const Icon = category.icon;
-        const isSelected = selected === category.id;
+    <div className="relative">
+      <div className="flex gap-3 overflow-x-auto hide-scrollbar pb-2 pr-16 md:pr-0">
+        {categories.map((category) => {
+          const Icon = category.icon;
+          const isSelected = selected === category.id;
 
-        return (
-          <button
-            key={category.id}
-            onClick={() => onSelect(category.id)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-full whitespace-nowrap transition-colors ${
-              isSelected
-                ? "bg-blue-600 text-white"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-            }`}
-          >
-            {Icon && <Icon className="h-4 w-4" />}
-            <span>{category.label}</span>
-          </button>
-        );
-      })}
+          return (
+            <button
+              key={category.id}
+              onClick={() => onSelect(category.id)}
+              className={`flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl px-5 cursor-pointer transition-colors ${
+                isSelected
+                  ? "bg-primary text-white"
+                  : "bg-white border border-gray-100 hover:border-primary/30"
+              }`}
+            >
+              <Icon className={`w-[18px] h-[18px] ${isSelected ? "" : "text-gray-500"}`} />
+              <p className={`text-sm ${isSelected ? "font-semibold" : "font-medium"}`}>
+                {category.label}
+              </p>
+            </button>
+          );
+        })}
+      </div>
+      <div className="absolute right-0 top-0 bottom-2 w-16 bg-gradient-to-l from-background to-transparent pointer-events-none md:hidden" />
     </div>
   );
 }
-
-export { categories };
