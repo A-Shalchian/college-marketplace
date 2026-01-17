@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { Id } from "./_generated/dataModel";
 
 export const getOrCreateConversation = mutation({
   args: {
@@ -128,9 +129,19 @@ export const getConversationById = query({
     const buyer = await ctx.db.get(conversation.buyerId);
     const seller = await ctx.db.get(conversation.sellerId);
 
+    let imageUrls: string[] = [];
+    if (listing) {
+      imageUrls = await Promise.all(
+        listing.images.map(async (id) => {
+          if (id.startsWith("http")) return id;
+          return await ctx.storage.getUrl(id as Id<"_storage">);
+        })
+      ).then((urls) => urls.filter(Boolean) as string[]);
+    }
+
     return {
       ...conversation,
-      listing,
+      listing: listing ? { ...listing, imageUrls } : null,
       buyer,
       seller,
     };
