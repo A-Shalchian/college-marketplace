@@ -9,9 +9,15 @@ import { Id } from "@/convex/_generated/dataModel";
 import { Navbar } from "@/components/navbar";
 import { categories } from "@/components/category-filter";
 import { ImagePlus, X, Loader2, ArrowLeft } from "lucide-react";
+import { BottomNav } from "@/components/bottom-nav";
 import Link from "next/link";
 
 const conditions = ["New", "Like New", "Good", "Fair", "Poor"];
+const campuses = [
+  "St. James Campus",
+  "Casa Loma Campus",
+  "Waterfront Campus",
+];
 
 function EditListingContent({ id }: { id: string }) {
   const router = useRouter();
@@ -32,6 +38,7 @@ function EditListingContent({ id }: { id: string }) {
   const [price, setPrice] = useState("");
   const [category, setCategory] = useState("");
   const [condition, setCondition] = useState("");
+  const [campus, setCampus] = useState("");
   const [existingImages, setExistingImages] = useState<string[]>([]);
   const [existingImageUrls, setExistingImageUrls] = useState<string[]>([]);
   const [newImageFiles, setNewImageFiles] = useState<File[]>([]);
@@ -46,6 +53,7 @@ function EditListingContent({ id }: { id: string }) {
       setPrice(listing.price.toString());
       setCategory(listing.category);
       setCondition(listing.condition);
+      setCampus(listing.campus || "St. James Campus");
       setExistingImages(listing.images);
       setExistingImageUrls(listing.imageUrls);
       setInitialized(true);
@@ -107,6 +115,7 @@ function EditListingContent({ id }: { id: string }) {
         price: parseFloat(price),
         category,
         condition,
+        campus,
         images: [...existingImages, ...newStorageIds],
       });
 
@@ -158,23 +167,23 @@ function EditListingContent({ id }: { id: string }) {
     );
   }
 
-  const isFormValid = title && description && price && category && condition;
+  const isFormValid = title && description && price && category && condition && campus;
   const totalImages = existingImages.length + newImageFiles.length;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background pb-20 md:pb-0">
       <Navbar />
 
       <main className="max-w-2xl mx-auto px-4 py-8">
         <Link
           href={`/listings/${listing._id}`}
-          className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6"
+          className="inline-flex items-center gap-2 text-gray-600 hover:text-foreground mb-6"
         >
           <ArrowLeft className="h-4 w-4" />
           Back to listing
         </Link>
 
-        <h1 className="text-2xl font-bold text-gray-900 mb-6">Edit Listing</h1>
+        <h1 className="text-2xl font-bold text-foreground mb-6">Edit Listing</h1>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
@@ -325,6 +334,25 @@ function EditListingContent({ id }: { id: string }) {
             </select>
           </div>
 
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Campus Location
+            </label>
+            <select
+              value={campus}
+              onChange={(e) => setCampus(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            >
+              <option value="">Select campus</option>
+              {campuses.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
+          </div>
+
           <button
             type="submit"
             disabled={!isFormValid || isSubmitting}
@@ -335,6 +363,8 @@ function EditListingContent({ id }: { id: string }) {
           </button>
         </form>
       </main>
+
+      <BottomNav />
     </div>
   );
 }

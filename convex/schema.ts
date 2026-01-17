@@ -19,8 +19,9 @@ export default defineSchema({
     price: v.number(),
     category: v.string(),
     condition: v.string(),
+    campus: v.string(),
     images: v.array(v.string()),
-    status: v.string(), // "active", "sold", "removed"
+    status: v.string(),
     createdAt: v.number(),
   })
     .index("by_seller", ["sellerId"])

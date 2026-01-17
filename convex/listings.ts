@@ -10,6 +10,7 @@ export const create = mutation({
     price: v.number(),
     category: v.string(),
     condition: v.string(),
+    campus: v.string(),
     images: v.array(v.string()),
   },
   handler: async (ctx, args) => {
@@ -134,6 +135,7 @@ export const update = mutation({
     price: v.number(),
     category: v.string(),
     condition: v.string(),
+    campus: v.string(),
     images: v.array(v.string()),
   },
   handler: async (ctx, args) => {

@@ -1,19 +1,35 @@
 "use client";
 
-import { use, Suspense } from "react";
+import { use, Suspense, useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { Navbar } from "@/components/navbar";
-import { ArrowLeft, MessageCircle, User, Loader2, CheckCircle, Pencil } from "lucide-react";
+import { Footer } from "@/components/footer";
+import { BottomNav } from "@/components/bottom-nav";
 import Link from "next/link";
-import Image from "next/image";
+import {
+  Loader2,
+  ChevronRight,
+  MessageSquare,
+  Heart,
+  Shield,
+  User,
+  Star,
+  Calendar,
+  Zap,
+  MapPin,
+  CheckCircle,
+  Pencil,
+  BadgeCheck,
+} from "lucide-react";
 
 function ListingContent({ id }: { id: string }) {
   const router = useRouter();
   const { user } = useUser();
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
   const listing = useQuery(api.listings.getById, {
     listingId: id as Id<"listings">,
@@ -40,10 +56,10 @@ function ListingContent({ id }: { id: string }) {
 
   if (listing === undefined) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-background">
         <Navbar />
         <div className="flex justify-center items-center py-20">
-          <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
       </div>
     );
@@ -51,151 +67,295 @@ function ListingContent({ id }: { id: string }) {
 
   if (!listing) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-background">
         <Navbar />
-        <div className="max-w-4xl mx-auto px-4 py-8 text-center">
-          <p className="text-gray-500">Listing not found</p>
-          <Link href="/" className="text-blue-600 hover:underline mt-4 block">
-            Back to home
+        <div className="max-w-[1280px] mx-auto px-6 py-20 text-center">
+          <p className="text-gray-500 text-lg">Listing not found</p>
+          <Link
+            href="/"
+            className="text-primary hover:underline mt-4 inline-block font-semibold"
+          >
+            Back to Marketplace
           </Link>
         </div>
+        <BottomNav />
       </div>
     );
   }
 
   const isOwner = currentUser?._id === listing.sellerId;
+  const images = listing.imageUrls.length > 0 ? listing.imageUrls : [];
+  const selectedImage = images[selectedImageIndex];
+
+  const getCategoryLabel = (category: string) => {
+    const labels: Record<string, string> = {
+      textbooks: "Textbooks",
+      electronics: "Electronics",
+      furniture: "Furniture",
+      clothing: "Clothing",
+      supplies: "Study Supplies",
+      other: "Other",
+    };
+    return labels[category] || category;
+  };
+
+  const getTimeAgo = (timestamp: number): string => {
+    const seconds = Math.floor((Date.now() - timestamp) / 1000);
+    if (seconds < 60) return "Just now";
+    if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+    if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
+    if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`;
+    return new Date(timestamp).toLocaleDateString();
+  };
+
+  const sellerJoinDate = listing.seller?.createdAt
+    ? new Date(listing.seller.createdAt).getFullYear()
+    : new Date().getFullYear();
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background pb-20 md:pb-0">
       <Navbar />
 
-      <main className="max-w-4xl mx-auto px-4 py-8">
-        <Link
-          href="/"
-          className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to listings
-        </Link>
+      <main className="max-w-[1280px] mx-auto px-4 md:px-6 py-6 md:py-8">
+        <nav className="flex items-center gap-2 mb-6 md:mb-8 text-sm text-gray-500">
+          <Link href="/" className="hover:text-primary transition-colors">
+            Marketplace
+          </Link>
+          <ChevronRight className="w-4 h-4" />
+          <Link href={`/?category=${listing.category}`} className="hover:text-primary transition-colors">
+            {getCategoryLabel(listing.category)}
+          </Link>
+          <ChevronRight className="w-4 h-4" />
+          <span className="text-foreground font-semibold truncate max-w-[200px]">
+            {listing.title}
+          </span>
+        </nav>
 
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-          <div className="grid md:grid-cols-2 gap-6">
-            <div className="aspect-square relative bg-gray-100">
-              {listing.imageUrls[0] ? (
-                <Image
-                  src={listing.imageUrls[0]}
-                  alt={listing.title}
-                  fill
-                  className="object-cover"
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10">
+          <div className="lg:col-span-7 space-y-4">
+            <div className="aspect-[4/3] w-full rounded-xl overflow-hidden bg-white border border-gray-100 shadow-sm">
+              {selectedImage ? (
+                <div
+                  className="w-full h-full bg-center bg-no-repeat bg-cover"
+                  style={{ backgroundImage: `url(${selectedImage})` }}
                 />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-gray-400">
-                  No image
+                <div className="w-full h-full flex items-center justify-center bg-gray-100">
+                  <span className="text-gray-400">No image available</span>
                 </div>
               )}
             </div>
 
-            <div className="p-6">
-              <div className="flex items-start justify-between">
-                <div>
-                  <span className="inline-block px-2 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded-md mb-2">
-                    {listing.condition}
-                  </span>
-                  <h1 className="text-2xl font-bold text-gray-900">
-                    {listing.title}
-                  </h1>
-                </div>
+            {images.length > 1 && (
+              <div className="grid grid-cols-4 gap-3 md:gap-4">
+                {images.slice(0, 4).map((img, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setSelectedImageIndex(index)}
+                    className={`aspect-square rounded-lg bg-cover bg-center cursor-pointer transition-all ${
+                      selectedImageIndex === index
+                        ? "border-2 border-primary ring-2 ring-primary/20"
+                        : "border border-gray-100 opacity-70 hover:opacity-100"
+                    }`}
+                    style={{ backgroundImage: `url(${img})` }}
+                  />
+                ))}
+                {images.length > 4 && (
+                  <div className="aspect-square rounded-lg border border-gray-100 bg-gray-50 flex items-center justify-center cursor-pointer hover:bg-gray-100 transition-colors">
+                    <span className="text-sm font-bold text-gray-600">
+                      +{images.length - 4} More
+                    </span>
+                  </div>
+                )}
               </div>
+            )}
 
-              <p className="text-3xl font-bold text-blue-600 mt-4">
-                ${listing.price.toFixed(2)}
+            <div className="mt-6 md:mt-10 p-6 md:p-8 rounded-xl bg-white border border-gray-100 shadow-sm">
+              <h3 className="text-lg md:text-xl font-bold mb-4">Item Description</h3>
+              <p className="text-gray-600 leading-relaxed whitespace-pre-wrap">
+                {listing.description}
               </p>
 
-              <div className="mt-6 pt-6 border-t border-gray-200">
-                <h2 className="font-medium text-gray-900 mb-2">Description</h2>
-                <p className="text-gray-600 whitespace-pre-wrap">
-                  {listing.description}
-                </p>
-              </div>
-
-              <div className="mt-6 pt-6 border-t border-gray-200">
-                <h2 className="font-medium text-gray-900 mb-3">Seller</h2>
-                <div className="flex items-center gap-3">
-                  {listing.seller?.imageUrl ? (
-                    <Image
-                      src={listing.seller.imageUrl}
-                      alt={listing.seller.name}
-                      width={40}
-                      height={40}
-                      className="rounded-full"
-                    />
-                  ) : (
-                    <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
-                      <User className="h-5 w-5 text-gray-500" />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6 md:mt-8 pt-6 md:pt-8 border-t border-gray-100">
+                <div>
+                  <span className="text-xs font-bold uppercase tracking-wider text-gray-400">
+                    Details
+                  </span>
+                  <ul className="mt-3 space-y-2 text-sm">
+                    <li className="flex justify-between">
+                      <span className="text-gray-500">Category</span>
+                      <span className="font-medium">{getCategoryLabel(listing.category)}</span>
+                    </li>
+                    <li className="flex justify-between">
+                      <span className="text-gray-500">Condition</span>
+                      <span className="font-medium">{listing.condition}</span>
+                    </li>
+                    <li className="flex justify-between">
+                      <span className="text-gray-500">Posted</span>
+                      <span className="font-medium">{getTimeAgo(listing.createdAt)}</span>
+                    </li>
+                  </ul>
+                </div>
+                <div>
+                  <span className="text-xs font-bold uppercase tracking-wider text-gray-400">
+                    Campus Logistics
+                  </span>
+                  <div className="mt-3 flex gap-2 items-start">
+                    <MapPin className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+                    <div className="text-sm">
+                      <p className="font-medium">{listing.campus || "GBC Campus"}</p>
+                      <p className="text-gray-500">Available for meetup at Student Centre</p>
                     </div>
-                  )}
-                  <div>
-                    <p className="font-medium text-gray-900">
-                      {listing.seller?.name}
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      {listing.seller?.email}
-                    </p>
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
 
-              {!isOwner && user && (
-                <button
-                  onClick={handleContactSeller}
-                  className="w-full mt-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
-                >
-                  <MessageCircle className="h-5 w-5" />
-                  Contact Seller
-                </button>
-              )}
-
-              {!user && (
-                <p className="mt-6 text-center text-gray-500">
-                  <Link href="/sign-in" className="text-blue-600 hover:underline">
-                    Sign in
-                  </Link>{" "}
-                  to contact the seller
-                </p>
-              )}
-
-              {isOwner && (
-                <div className="mt-6 space-y-3">
-                  {listing.status === "active" ? (
-                    <>
-                      <button
-                        onClick={() =>
-                          updateStatus({ listingId: listing._id, status: "sold" })
-                        }
-                        className="w-full py-3 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
-                      >
-                        <CheckCircle className="h-5 w-5" />
-                        Mark as Sold
-                      </button>
-                      <Link
-                        href={`/listings/${listing._id}/edit`}
-                        className="w-full py-3 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
-                      >
-                        <Pencil className="h-5 w-5" />
-                        Edit Listing
-                      </Link>
-                    </>
-                  ) : (
-                    <div className="p-4 bg-green-50 rounded-lg text-center text-green-700 font-medium">
-                      This item has been sold
+          <div className="lg:col-span-5">
+            <div className="lg:sticky lg:top-24 space-y-4 md:space-y-6">
+              <div className="p-6 md:p-8 rounded-xl bg-white border border-gray-100 shadow-sm">
+                <div className="flex flex-wrap items-center gap-2 mb-4">
+                  <div className="px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold uppercase tracking-wide">
+                    {listing.condition}
+                  </div>
+                  {listing.status === "active" && (
+                    <div className="px-3 py-1 rounded-full bg-accent-mint/10 text-accent-mint text-xs font-bold uppercase tracking-wide flex items-center gap-1">
+                      <BadgeCheck className="w-3 h-3" /> Available
+                    </div>
+                  )}
+                  {listing.status === "sold" && (
+                    <div className="px-3 py-1 rounded-full bg-gray-100 text-gray-600 text-xs font-bold uppercase tracking-wide">
+                      Sold
                     </div>
                   )}
                 </div>
-              )}
+
+                <h1 className="text-2xl md:text-3xl lg:text-4xl font-extrabold leading-tight mb-2 tracking-tight">
+                  {listing.title}
+                </h1>
+                <p className="text-2xl md:text-3xl font-bold text-primary mb-6">
+                  ${listing.price.toFixed(2)}
+                </p>
+
+                {!isOwner && listing.status === "active" && (
+                  <div className="flex flex-col gap-3">
+                    {user ? (
+                      <button
+                        onClick={handleContactSeller}
+                        className="w-full py-3 md:py-4 bg-primary text-white rounded-xl font-bold text-base md:text-lg hover:bg-primary/90 transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary/20"
+                      >
+                        <MessageSquare className="w-5 h-5" />
+                        Message Seller
+                      </button>
+                    ) : (
+                      <Link
+                        href="/sign-in"
+                        className="w-full py-3 md:py-4 bg-primary text-white rounded-xl font-bold text-base md:text-lg hover:bg-primary/90 transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary/20"
+                      >
+                        Sign in to Message
+                      </Link>
+                    )}
+                    <button className="w-full py-3 md:py-4 bg-gray-100 text-foreground rounded-xl font-bold hover:bg-gray-200 transition-all flex items-center justify-center gap-2">
+                      <Heart className="w-5 h-5" />
+                      Save to Wishlist
+                    </button>
+                  </div>
+                )}
+
+                {isOwner && (
+                  <div className="flex flex-col gap-3">
+                    {listing.status === "active" ? (
+                      <>
+                        <button
+                          onClick={() =>
+                            updateStatus({ listingId: listing._id, status: "sold" })
+                          }
+                          className="w-full py-3 md:py-4 bg-accent-mint text-white rounded-xl font-bold hover:bg-accent-mint/90 transition-all flex items-center justify-center gap-2"
+                        >
+                          <CheckCircle className="w-5 h-5" />
+                          Mark as Sold
+                        </button>
+                        <Link
+                          href={`/listings/${listing._id}/edit`}
+                          className="w-full py-3 md:py-4 bg-gray-100 text-foreground rounded-xl font-bold hover:bg-gray-200 transition-all flex items-center justify-center gap-2"
+                        >
+                          <Pencil className="w-5 h-5" />
+                          Edit Listing
+                        </Link>
+                      </>
+                    ) : (
+                      <div className="p-4 bg-accent-mint/10 rounded-xl text-center text-accent-mint font-bold">
+                        This item has been sold
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <div className="p-5 md:p-6 rounded-xl bg-white border border-gray-100 shadow-sm">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-4">
+                  Meet the Seller
+                </h4>
+                <div className="flex items-center gap-4 mb-4">
+                  {listing.seller?.imageUrl ? (
+                    <div
+                      className="w-14 h-14 md:w-16 md:h-16 rounded-full bg-cover bg-center border-4 border-white shadow-sm"
+                      style={{ backgroundImage: `url(${listing.seller.imageUrl})` }}
+                    />
+                  ) : (
+                    <div className="w-14 h-14 md:w-16 md:h-16 rounded-full bg-gray-200 border-4 border-white shadow-sm flex items-center justify-center">
+                      <User className="w-6 h-6 text-gray-400" />
+                    </div>
+                  )}
+                  <div>
+                    <h5 className="text-base md:text-lg font-bold">{listing.seller?.name}</h5>
+                    <p className="text-sm text-gray-500">GBC Student</p>
+                    <div className="flex items-center gap-1 mt-1">
+                      <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+                      <span className="text-sm font-bold">5.0</span>
+                      <span className="text-xs text-gray-400">(New seller)</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap gap-2 mb-4 md:mb-6">
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-50 text-xs font-medium">
+                    <Calendar className="w-4 h-4 text-gray-400" />
+                    Member Since {sellerJoinDate}
+                  </div>
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-50 text-xs font-medium">
+                    <Zap className="w-4 h-4 text-gray-400" />
+                    Usually responds quickly
+                  </div>
+                </div>
+
+                <Link
+                  href="#"
+                  className="block text-center text-sm font-bold text-primary hover:underline"
+                >
+                  View Profile
+                </Link>
+              </div>
+
+              <div className="p-4 md:p-5 rounded-xl bg-primary/5 border border-primary/20 flex gap-4">
+                <Shield className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+                <div className="text-xs leading-relaxed text-primary">
+                  <p className="font-bold mb-1 uppercase tracking-wider">Safety Tip</p>
+                  Always meet in well-lit, public campus areas like the Student Centre.
+                  GBC Safe Zones are recommended for all transactions.
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </main>
+
+      <div className="hidden md:block">
+        <Footer />
+      </div>
+
+      <BottomNav />
     </div>
   );
 }
@@ -210,8 +370,8 @@ export default function ListingPage({
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+        <div className="min-h-screen bg-background flex items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
       }
     >
