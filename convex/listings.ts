@@ -1,6 +1,20 @@
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { mutation, query, QueryCtx, MutationCtx } from "./_generated/server";
 import { Id } from "./_generated/dataModel";
+import { moderateContent, Blocklist } from "./moderation";
+
+async function getBlocklist(ctx: QueryCtx | MutationCtx): Promise<Blocklist> {
+  const setting = await ctx.db
+    .query("settings")
+    .withIndex("by_key", (q) => q.eq("key", "moderation_blocklist"))
+    .unique();
+
+  if (!setting) {
+    return { drugs: [], sexual: [], weapons: [], scam: [], coded: [] };
+  }
+
+  return JSON.parse(setting.value);
+}
 
 export const create = mutation({
   args: {
@@ -14,12 +28,17 @@ export const create = mutation({
     images: v.array(v.string()),
   },
   handler: async (ctx, args) => {
+    const blocklist = await getBlocklist(ctx);
+    const moderation = moderateContent(args.title, args.description, blocklist);
+    const status = moderation.status === "rejected" ? "rejected" : "active";
     const listingId = await ctx.db.insert("listings", {
       ...args,
-      status: "active",
+      status,
+      moderationStatus: moderation.status,
+      moderationFlags: moderation.flags,
       createdAt: Date.now(),
     });
-    return listingId;
+    return { listingId, moderation };
   },
 });
 
@@ -140,6 +159,15 @@ export const update = mutation({
   },
   handler: async (ctx, args) => {
     const { listingId, ...updates } = args;
-    await ctx.db.patch(listingId, updates);
+    const blocklist = await getBlocklist(ctx);
+    const moderation = moderateContent(args.title, args.description, blocklist);
+    const status = moderation.status === "rejected" ? "rejected" : "active";
+    await ctx.db.patch(listingId, {
+      ...updates,
+      status,
+      moderationStatus: moderation.status,
+      moderationFlags: moderation.flags,
+    });
+    return { moderation };
   },
 });
