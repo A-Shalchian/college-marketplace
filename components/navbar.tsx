@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { UserButton, SignInButton, useUser } from "@clerk/nextjs";
-import { Plus, MessageCircle, Search, User } from "lucide-react";
+import { Store, Search, MessageCircle, PlusCircle } from "lucide-react";
 import { useState, useEffect } from "react";
 
 export function Navbar() {
@@ -26,63 +26,70 @@ export function Navbar() {
   };
 
   return (
-    <nav className="sticky top-0 z-50 bg-white border-b border-gray-200">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          <Link href="/" className="flex items-center gap-2">
-            <span className="text-xl font-bold text-blue-600">GBC</span>
-            <span className="text-xl font-semibold text-gray-900">
-              Marketplace
-            </span>
-          </Link>
+    <header className="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-md border-b border-gray-100">
+      <div className="max-w-[1280px] mx-auto px-6 h-20 flex items-center justify-between gap-8">
+        <Link href="/" className="flex items-center gap-3 shrink-0">
+          <div className="bg-primary p-2 rounded-lg text-white">
+            <Store className="w-6 h-6" />
+          </div>
+          <h1 className="text-xl font-bold tracking-tight text-primary">
+            GBC<span className="text-foreground">Market</span>
+          </h1>
+        </Link>
 
-          <form onSubmit={handleSearch} className="hidden md:flex flex-1 max-w-md mx-8">
-            <div className="relative w-full">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search listings..."
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-          </form>
+        <form onSubmit={handleSearch} className="flex-1 max-w-2xl relative hidden md:block">
+          <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-gray-400">
+            <Search className="w-5 h-5" />
+          </div>
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search textbooks, electronics, furniture..."
+            className="w-full h-12 pl-12 pr-4 bg-gray-100 border-none rounded-xl focus:ring-2 focus:ring-primary/20 placeholder:text-gray-500 transition-all"
+          />
+        </form>
 
-          <div className="flex items-center gap-4">
-            {isLoaded && isSignedIn ? (
-              <>
+        <div className="flex items-center gap-6">
+          {isLoaded && isSignedIn ? (
+            <>
+              <nav className="hidden lg:flex items-center gap-6">
                 <Link
                   href="/messages"
-                  className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                  className="text-sm font-semibold hover:text-primary transition-colors"
                 >
-                  <MessageCircle className="h-5 w-5" />
+                  Messages
                 </Link>
-                <Link
-                  href="/sell"
-                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  <Plus className="h-4 w-4" />
-                  <span className="hidden sm:inline">Sell</span>
-                </Link>
-                <Link
-                  href="/profile"
-                  className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
-                >
-                  <User className="h-5 w-5" />
-                </Link>
-                <UserButton afterSignOutUrl="/" />
-              </>
-            ) : (
-              <SignInButton mode="modal">
-                <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                  Sign In
-                </button>
-              </SignInButton>
-            )}
-          </div>
+              </nav>
+              <div className="h-8 w-[1px] bg-gray-200 hidden lg:block" />
+              <Link
+                href="/sell"
+                className="hidden md:flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-primary/90 transition-all shadow-lg shadow-primary/20"
+              >
+                <PlusCircle className="w-[18px] h-[18px]" />
+                <span>Post Item</span>
+              </Link>
+              <div className="relative">
+                <UserButton
+                  afterSignOutUrl="/"
+                  appearance={{
+                    elements: {
+                      avatarBox: "w-10 h-10 rounded-full border-2 border-white",
+                    },
+                  }}
+                />
+                <div className="absolute bottom-0 right-0 w-3 h-3 bg-accent-mint border-2 border-white rounded-full" />
+              </div>
+            </>
+          ) : (
+            <SignInButton mode="modal">
+              <button className="flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-primary/90 transition-all shadow-lg shadow-primary/20">
+                Sign In
+              </button>
+            </SignInButton>
+          )}
         </div>
       </div>
-    </nav>
+    </header>
   );
 }
