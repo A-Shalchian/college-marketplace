@@ -49,3 +49,15 @@ export const getUserById = query({
     return await ctx.db.get(args.userId);
   },
 });
+
+export const updateDefaultCampus = mutation({
+  args: {
+    userId: v.id("users"),
+    defaultCampus: v.string(),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.userId, {
+      defaultCampus: args.defaultCampus,
+    });
+  },
+});

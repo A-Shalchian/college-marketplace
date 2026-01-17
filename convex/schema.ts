@@ -7,6 +7,7 @@ export default defineSchema({
     email: v.string(),
     name: v.string(),
     imageUrl: v.optional(v.string()),
+    defaultCampus: v.optional(v.string()),
     createdAt: v.number(),
   })
     .index("by_clerk_id", ["clerkId"])
