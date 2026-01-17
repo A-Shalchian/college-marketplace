@@ -66,24 +66,24 @@ export function MobileSearch({ isOpen, onClose, initialQuery = "" }: MobileSearc
   return (
     <div className="fixed inset-0 z-[100] bg-background md:hidden overflow-y-auto">
       <div className="flex flex-col min-h-full">
-        <div className="sticky top-0 bg-background z-10 border-b border-gray-100">
+        <div className="sticky top-0 bg-background z-10 border-b border-gray-100 dark:border-border">
           <div className="flex items-center gap-3 p-4">
             <button
               onClick={onClose}
-              className="p-2 -ml-2 text-gray-500 hover:text-gray-700"
+              className="p-2 -ml-2 text-muted-foreground hover:text-foreground"
             >
               <X className="w-6 h-6" />
             </button>
             <form onSubmit={handleSubmit} className="flex-1">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                 <input
                   ref={inputRef}
                   type="text"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder="Search textbooks, electronics..."
-                  className="w-full h-12 pl-11 pr-4 bg-gray-100 border-none rounded-xl focus:ring-2 focus:ring-primary/20 placeholder:text-gray-500"
+                  className="w-full h-12 pl-11 pr-4 bg-gray-100 dark:bg-muted border-none rounded-xl focus:ring-2 focus:ring-primary/20 placeholder:text-muted-foreground"
                 />
               </div>
             </form>
@@ -92,13 +92,13 @@ export function MobileSearch({ isOpen, onClose, initialQuery = "" }: MobileSearc
 
         <div className="flex-1 p-4 space-y-6">
           <div>
-            <p className="text-sm font-semibold text-gray-500 mb-3">Popular searches</p>
+            <p className="text-sm font-semibold text-muted-foreground mb-3">Popular searches</p>
             <div className="flex flex-wrap gap-2">
               {["Textbooks", "MacBook", "Calculator", "Desk", "Winter Jacket"].map((term) => (
                 <button
                   key={term}
                   onClick={() => handlePopularSearch(term)}
-                  className="px-4 py-2 bg-white border border-gray-100 rounded-full text-sm font-medium hover:border-primary/30 transition-colors"
+                  className="px-4 py-2 bg-white dark:bg-card border border-gray-100 dark:border-border rounded-full text-sm font-medium hover:border-primary/30 dark:hover:border-primary/30 transition-colors"
                 >
                   {term}
                 </button>
@@ -107,7 +107,7 @@ export function MobileSearch({ isOpen, onClose, initialQuery = "" }: MobileSearc
           </div>
 
           <div>
-            <p className="text-sm font-semibold text-gray-500 mb-3">Browse by category</p>
+            <p className="text-sm font-semibold text-muted-foreground mb-3">Browse by category</p>
             <div className="grid grid-cols-3 gap-2">
               {categories.map((category) => {
                 const Icon = category.icon;
@@ -115,10 +115,10 @@ export function MobileSearch({ isOpen, onClose, initialQuery = "" }: MobileSearc
                   <button
                     key={category.id}
                     onClick={() => handleCategoryClick(category.id)}
-                    className="flex flex-col items-center gap-2 p-4 bg-white border border-gray-100 rounded-xl hover:border-primary/30 transition-colors"
+                    className="flex flex-col items-center gap-2 p-4 bg-white dark:bg-card border border-gray-100 dark:border-border rounded-xl hover:border-primary/30 dark:hover:border-primary/30 transition-colors"
                   >
                     <Icon className="w-6 h-6 text-primary" />
-                    <span className="text-xs font-medium text-gray-700">{category.label}</span>
+                    <span className="text-xs font-medium">{category.label}</span>
                   </button>
                 );
               })}
@@ -129,7 +129,7 @@ export function MobileSearch({ isOpen, onClose, initialQuery = "" }: MobileSearc
             <div>
               <div className="flex items-center gap-2 mb-3">
                 <TrendingUp className="w-4 h-4 text-primary" />
-                <p className="text-sm font-semibold text-gray-500">Recently added</p>
+                <p className="text-sm font-semibold text-muted-foreground">Recently added</p>
               </div>
               <div className="space-y-2">
                 {recentListings.map((listing) => (
@@ -139,7 +139,7 @@ export function MobileSearch({ isOpen, onClose, initialQuery = "" }: MobileSearc
                       router.push(`/listings/${listing._id}`);
                       onClose();
                     }}
-                    className="w-full flex items-center gap-3 p-3 bg-white border border-gray-100 rounded-xl hover:border-primary/30 transition-colors text-left"
+                    className="w-full flex items-center gap-3 p-3 bg-white dark:bg-card border border-gray-100 dark:border-border rounded-xl hover:border-primary/30 dark:hover:border-primary/30 transition-colors text-left"
                   >
                     {listing.imageUrls[0] ? (
                       <div
@@ -147,7 +147,7 @@ export function MobileSearch({ isOpen, onClose, initialQuery = "" }: MobileSearc
                         style={{ backgroundImage: `url(${listing.imageUrls[0]})` }}
                       />
                     ) : (
-                      <div className="w-12 h-12 rounded-lg bg-gray-100 shrink-0" />
+                      <div className="w-12 h-12 rounded-lg bg-gray-100 dark:bg-muted shrink-0" />
                     )}
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-sm text-foreground truncate">{listing.title}</p>

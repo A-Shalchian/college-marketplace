@@ -31,7 +31,7 @@ export function ListingCard({
 
   return (
     <Link href={`/listings/${id}`}>
-      <div className="subtle-float bg-white rounded-xl overflow-hidden group">
+      <div className="subtle-float bg-white dark:bg-card rounded-xl overflow-hidden group border border-transparent dark:border-border">
         <div className="relative aspect-square">
           <div className="absolute top-3 left-3 z-10">
             <span className="bg-primary text-white text-xs font-bold px-2.5 py-1 rounded-lg">
@@ -43,7 +43,7 @@ export function ListingCard({
               onClick={(e) => {
                 e.preventDefault();
               }}
-              className="bg-white/80 backdrop-blur-sm w-8 h-8 flex items-center justify-center rounded-full text-gray-600 hover:text-red-500 transition-colors"
+              className="bg-white/80 dark:bg-card/80 backdrop-blur-sm w-8 h-8 flex items-center justify-center rounded-full text-gray-600 dark:text-muted-foreground hover:text-red-500 transition-colors"
             >
               <Heart className="w-5 h-5" />
             </button>
@@ -54,7 +54,7 @@ export function ListingCard({
               style={{ backgroundImage: `url(${images[0]})` }}
             />
           ) : (
-            <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400">
+            <div className="w-full h-full bg-gray-100 dark:bg-muted flex items-center justify-center text-muted-foreground">
               No image
             </div>
           )}
@@ -66,7 +66,7 @@ export function ListingCard({
         </div>
         <div className="p-4">
           <h3 className="font-bold text-foreground line-clamp-1 mb-3">{title}</h3>
-          <div className="flex items-center justify-between mt-auto pt-3 border-t border-gray-50">
+          <div className="flex items-center justify-between mt-auto pt-3 border-t border-gray-50 dark:border-border">
             <div className="flex items-center gap-2">
               {sellerImage ? (
                 <div
@@ -74,11 +74,11 @@ export function ListingCard({
                   style={{ backgroundImage: `url(${sellerImage})` }}
                 />
               ) : (
-                <div className="w-6 h-6 rounded-full bg-gray-200" />
+                <div className="w-6 h-6 rounded-full bg-gray-200 dark:bg-muted" />
               )}
-              <span className="text-xs text-gray-500 font-medium">{sellerName}</span>
+              <span className="text-xs text-muted-foreground font-medium">{sellerName}</span>
             </div>
-            <span className="text-[10px] text-gray-400">{timeAgo}</span>
+            <span className="text-[10px] text-muted-foreground">{timeAgo}</span>
           </div>
         </div>
       </div>

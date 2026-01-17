@@ -32,10 +32,10 @@ export function CategoryFilter({ selected, onSelect }: CategoryFilterProps) {
               className={`flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl px-5 cursor-pointer transition-colors ${
                 isSelected
                   ? "bg-primary text-white"
-                  : "bg-white border border-gray-100 hover:border-primary/30"
+                  : "bg-white dark:bg-card border border-gray-100 dark:border-border hover:border-primary/30 dark:hover:border-primary/30"
               }`}
             >
-              <Icon className={`w-[18px] h-[18px] ${isSelected ? "" : "text-gray-500"}`} />
+              <Icon className={`w-[18px] h-[18px] ${isSelected ? "" : "text-muted-foreground"}`} />
               <p className={`text-sm ${isSelected ? "font-semibold" : "font-medium"}`}>
                 {category.label}
               </p>

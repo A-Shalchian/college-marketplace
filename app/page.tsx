@@ -75,14 +75,14 @@ function HomeContent() {
 
         {searchQuery && (
           <div className="mb-6 flex items-center gap-2">
-            <span className="text-gray-600">
+            <span className="text-muted-foreground">
               Results for &apos;<span className="font-medium">{searchQuery}</span>&apos;
             </span>
             <Link
               href="/"
-              className="p-1 hover:bg-gray-200 rounded-full transition-colors"
+              className="p-1 hover:bg-gray-200 dark:hover:bg-muted rounded-full transition-colors"
             >
-              <X className="h-4 w-4 text-gray-500" />
+              <X className="h-4 w-4 text-muted-foreground" />
             </Link>
           </div>
         )}
@@ -90,8 +90,8 @@ function HomeContent() {
         <div className="flex items-center justify-between mb-6 md:mb-8">
           <h2 className="text-xl md:text-2xl font-bold">Latest on Campus</h2>
           <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-500 hidden sm:inline">Sort by:</span>
-            <button className="bg-white px-3 py-1.5 rounded-lg border border-gray-100 text-sm font-semibold flex items-center gap-1">
+            <span className="text-sm text-muted-foreground hidden sm:inline">Sort by:</span>
+            <button className="bg-white dark:bg-card px-3 py-1.5 rounded-lg border border-gray-100 dark:border-border text-sm font-semibold flex items-center gap-1">
               Newest <ChevronDown className="w-[18px] h-[18px]" />
             </button>
           </div>
@@ -119,10 +119,10 @@ function HomeContent() {
           </div>
         ) : (
           <div className="text-center py-20">
-            <p className="text-gray-500 text-lg">
+            <p className="text-muted-foreground text-lg">
               {searchQuery ? "No listings found" : "No listings yet"}
             </p>
-            <p className="text-gray-400 mt-2">
+            <p className="text-muted-foreground/70 mt-2">
               {searchQuery
                 ? "Try a different search term"
                 : "Be the first to post something!"}
@@ -132,7 +132,7 @@ function HomeContent() {
 
         {filteredListings && filteredListings.length > 0 && (
           <div className="flex justify-center mt-12 mb-8 md:mb-20">
-            <button className="px-8 py-3 rounded-xl border border-gray-200 font-bold hover:bg-white transition-all flex items-center gap-2">
+            <button className="px-8 py-3 rounded-xl border border-gray-200 dark:border-border font-bold hover:bg-white dark:hover:bg-card transition-all flex items-center gap-2">
               Load More Items
             </button>
           </div>
@@ -153,12 +153,12 @@ function HomeContent() {
 
       {showCategoryModal && (
         <div className="fixed inset-0 z-[100] bg-black/50 flex items-end md:items-center justify-center">
-          <div className="bg-white w-full md:w-[480px] md:rounded-2xl rounded-t-2xl max-h-[80vh] overflow-hidden">
-            <div className="flex items-center justify-between p-4 border-b border-gray-100">
+          <div className="bg-white dark:bg-card w-full md:w-[480px] md:rounded-2xl rounded-t-2xl max-h-[80vh] overflow-hidden">
+            <div className="flex items-center justify-between p-4 border-b border-gray-100 dark:border-border">
               <h3 className="font-bold text-lg">All Categories</h3>
               <button
                 onClick={() => setShowCategoryModal(false)}
-                className="p-2 -mr-2 text-gray-500 hover:text-gray-700"
+                className="p-2 -mr-2 text-muted-foreground hover:text-foreground"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -175,11 +175,11 @@ function HomeContent() {
                     className={`flex items-center gap-3 p-4 rounded-xl transition-colors ${
                       isSelected
                         ? "bg-primary text-white"
-                        : "bg-gray-50 hover:bg-gray-100"
+                        : "bg-gray-50 dark:bg-muted hover:bg-gray-100 dark:hover:bg-border"
                     }`}
                   >
-                    <Icon className={`w-5 h-5 ${isSelected ? "" : "text-gray-500"}`} />
-                    <span className={`font-medium ${isSelected ? "" : "text-gray-700"}`}>
+                    <Icon className={`w-5 h-5 ${isSelected ? "" : "text-muted-foreground"}`} />
+                    <span className={`font-medium ${isSelected ? "" : "text-foreground"}`}>
                       {category.label}
                     </span>
                   </button>

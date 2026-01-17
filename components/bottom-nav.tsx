@@ -25,12 +25,12 @@ export function BottomNav({ onSearchClick }: BottomNavProps) {
   };
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-100 md:hidden">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-card border-t border-gray-100 dark:border-border md:hidden">
       <div className="flex items-center justify-around h-16 px-2">
         <Link
           href="/"
           className={`flex flex-col items-center justify-center w-16 h-full ${
-            isActive("/") ? "text-primary" : "text-gray-400"
+            isActive("/") ? "text-primary" : "text-muted-foreground"
           }`}
         >
           <Home className="w-6 h-6" />
@@ -39,7 +39,7 @@ export function BottomNav({ onSearchClick }: BottomNavProps) {
 
         <button
           onClick={handleSearchClick}
-          className="flex flex-col items-center justify-center w-16 h-full text-gray-400"
+          className="flex flex-col items-center justify-center w-16 h-full text-muted-foreground"
         >
           <Search className="w-6 h-6" />
           <span className="text-[10px] mt-1 font-medium">Search</span>
@@ -57,7 +57,7 @@ export function BottomNav({ onSearchClick }: BottomNavProps) {
         <Link
           href={isSignedIn ? "/messages" : "/sign-in"}
           className={`flex flex-col items-center justify-center w-16 h-full ${
-            pathname.startsWith("/messages") ? "text-primary" : "text-gray-400"
+            pathname.startsWith("/messages") ? "text-primary" : "text-muted-foreground"
           }`}
         >
           <MessageCircle className="w-6 h-6" />
@@ -67,7 +67,7 @@ export function BottomNav({ onSearchClick }: BottomNavProps) {
         <Link
           href={isSignedIn ? "/profile" : "/sign-in"}
           className={`flex flex-col items-center justify-center w-16 h-full ${
-            isActive("/profile") ? "text-primary" : "text-gray-400"
+            isActive("/profile") ? "text-primary" : "text-muted-foreground"
           }`}
         >
           <User className="w-6 h-6" />
