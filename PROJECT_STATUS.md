@@ -7,17 +7,57 @@ A college marketplace application exclusively for George Brown College students 
 
 ---
 
-## Sprint 2: UI/UX Overhaul
+## Sprint 4: Admin Dashboard & Content Moderation
 
 ### Sprint Goal
-Redesign the entire application with a modern, polished UI based on custom Stich designs. Add campus location support and improve mobile experience.
+Build comprehensive admin dashboard for content moderation, user management, and platform safety.
 
 ### Sprint Duration
 January 2026
 
 ---
 
-## Sprint 2 Completed Features
+## Sprint 4 Completed Features
+
+| Feature | Description | Status |
+|---------|-------------|--------|
+| **Admin Dashboard** | Protected admin area at /admin with role-based access | ✅ Complete |
+| **Admin Overview** | Stats dashboard with users, listings, reports, flagged content | ✅ Complete |
+| **Listings Management** | View all listings, filter by status, approve/reject/remove | ✅ Complete |
+| **Users Management** | View all users, ban/unban, warn, change roles | ✅ Complete |
+| **Reports System** | User-submitted reports with resolution workflow | ✅ Complete |
+| **Keyword Moderation** | Auto-flag/reject listings with blocked keywords | ✅ Complete |
+| **Settings Page** | Admin UI to manage blocked keywords by category | ✅ Complete |
+| **Role System** | user/admin/super_admin roles with access control | ✅ Complete |
+| **Moderation Logs** | Audit trail of all admin actions | ✅ Complete |
+| **Mobile Admin UI** | Responsive admin dashboard with collapsible sidebar | ✅ Complete |
+
+---
+
+## Sprint 3 Completed Features (Previous)
+
+### Sprint Goal
+Enhance user profile experience with settings management, dark mode theming, and improved navigation.
+
+## Sprint 3 Completed Features
+
+| Feature | Description | Status |
+|---------|-------------|--------|
+| **Dark Mode** | Full theme toggle with light/dark modes, persists to localStorage | ✅ Complete |
+| **Theme Provider** | React context for theme state management across app | ✅ Complete |
+| **Settings Dropdown** | Profile settings menu with campus, theme, help, sign out | ✅ Complete |
+| **Default Campus Setting** | User preference auto-fills on new listings | ✅ Complete |
+| **Help & Support Modal** | FAQ accordion with common questions and contact info | ✅ Complete |
+| **Edit Listing Redesign** | Matched to create listing design with sidebar tips | ✅ Complete |
+| **Delete Listing from Edit** | Delete button with confirmation on edit page | ✅ Complete |
+| **Dashboard Navigation** | Added Dashboard link in UserButton dropdown | ✅ Complete |
+| **My Listings Navigation** | Quick link to profile listings section | ✅ Complete |
+| **Edit Profile Button** | Opens Clerk profile management modal | ✅ Complete |
+| **Dark Mode Components** | All components updated with dark: variants | ✅ Complete |
+
+---
+
+## Sprint 2 Completed Features (Previous)
 
 | Feature | Description | Status |
 |---------|-------------|--------|
@@ -62,22 +102,56 @@ January 2026
 
 ---
 
-## Sprint 3 Backlog (Next Up)
+## Sprint 4 Backlog (Next Up)
 
 | Feature | Priority | Description |
 |---------|----------|-------------|
-| **Profile Page Redesign** | High | Update profile page with new Stich design |
-| **Edit Listing Redesign** | High | Match edit page to new create listing design |
-| **Saved/Wishlist Listings** | High | Save button functionality, saved items page |
+| **Saved/Wishlist Listings** | High | Heart button saves items, dedicated saved page |
 | **Filter Tabs (Buying/Selling)** | High | Filter messages by transaction role |
 | **Sort Options** | High | Sort listings by newest, price low-high, etc. |
 | **Price Range Filter** | High | Filter by min/max price |
 | **Campus Filter** | High | Filter listings by campus location |
 | **Unread Message Badge** | High | Show unread count on messages icon |
+| **Profile Page Stats** | Medium | Real ratings, transaction history |
 
 ---
 
-## Sprint 4+ Backlog (Future)
+## Sprint 5 Backlog (AI Moderation)
+
+| Feature | Priority | Description |
+|---------|----------|-------------|
+| **OpenAI Moderation API** | High | Free API, catches context not just keywords |
+| **Layered Moderation** | High | Keyword filter → AI check → Admin review |
+| **Perspective API** | Medium | Google's toxicity detection for messages |
+| **Claude Review** | Low | Nuanced AI judgment for edge cases |
+
+### AI Moderation Implementation Plan
+
+```
+Layer 1: Keyword Filter (instant, free) - DONE
+    ↓ passes
+Layer 2: OpenAI Moderation API (free, catches context)
+    ↓ passes
+Layer 3: Active (no human review needed)
+
+If flagged at any layer → Admin review queue
+```
+
+**Requirements:**
+- OpenAI API key (free tier works)
+- Convex action to call external API
+- ~100ms added latency per listing
+
+**API Options:**
+| API | Cost | Speed | Best For |
+|-----|------|-------|----------|
+| OpenAI Moderation | Free | ~100ms | Sexual, violence, hate detection |
+| Perspective API | Free (1 QPS) | ~200ms | Toxicity in messages |
+| Claude Haiku | ~$0.0001/check | ~500ms | Nuanced context understanding |
+
+---
+
+## Sprint 6+ Backlog (Future)
 
 | Feature | Priority | Description |
 |---------|----------|-------------|
@@ -90,7 +164,6 @@ January 2026
 | **Recently Viewed** | Low | History of viewed listings |
 | **Similar Listings** | Low | Recommendations based on viewing |
 | **Share Listing** | Low | Share to social media |
-| **Dark Mode** | Low | Theme toggle |
 | **Listing Expiration** | Low | Auto-hide listings after 30 days |
 | **Draft Listings** | Low | Save draft functionality |
 | **Boost Listing** | Low | Premium visibility feature |
@@ -107,6 +180,11 @@ users
 ├── email (string)
 ├── name (string)
 ├── imageUrl (string?)
+├── defaultCampus (string?)
+├── role (string?: user | admin | super_admin)  ← Sprint 4
+├── isBanned (boolean?)                          ← Sprint 4
+├── banReason (string?)                          ← Sprint 4
+├── warningCount (number?)                       ← Sprint 4
 └── createdAt (number)
 
 listings
@@ -116,9 +194,13 @@ listings
 ├── price (number)
 ├── category (string)
 ├── condition (string)
-├── campus (string)          ← NEW
+├── campus (string)
 ├── images (string[])
-├── status (string: active | sold | removed)
+├── status (string: active | sold | rejected | removed)
+├── moderationStatus (string?: clean | flagged | rejected)  ← Sprint 4
+├── moderationFlags (string[]?)                              ← Sprint 4
+├── reviewedBy (id → users?)                                 ← Sprint 4
+├── reviewedAt (number?)                                     ← Sprint 4
 └── createdAt (number)
 
 conversations
@@ -132,6 +214,30 @@ messages
 ├── senderId (id → users)
 ├── content (string)
 └── createdAt (number)
+
+reports                          ← NEW Sprint 4
+├── listingId (id → listings)
+├── reporterId (id → users)
+├── reason (string)
+├── description (string?)
+├── status (string: pending | resolved)
+├── resolvedBy (id → users?)
+├── resolvedAt (number?)
+└── createdAt (number)
+
+moderationLogs                   ← NEW Sprint 4
+├── adminId (id → users)
+├── action (string)
+├── targetType (string)
+├── targetId (string)
+├── reason (string?)
+├── metadata (string?)
+└── createdAt (number)
+
+settings                         ← NEW Sprint 4
+├── key (string)
+├── value (string - JSON)
+└── updatedAt (number)
 ```
 
 ### Project Structure
@@ -144,31 +250,42 @@ college-marketplace/
 │   ├── globals.css                 # Global styles & design tokens
 │   ├── not-found.tsx               # 404 page
 │   ├── sell/page.tsx               # Create listing (redesigned)
-│   ├── profile/page.tsx            # User profile
+│   ├── profile/page.tsx            # User profile with settings
 │   ├── messages/
 │   │   ├── page.tsx                # Conversations list (redesigned)
 │   │   └── [id]/page.tsx           # Chat thread (redesigned)
 │   ├── listings/
 │   │   └── [id]/
 │   │       ├── page.tsx            # Listing detail (redesigned)
-│   │       └── edit/page.tsx       # Edit listing
+│   │       └── edit/page.tsx       # Edit listing (redesigned)
+│   ├── admin/                       ← NEW Sprint 4
+│   │   ├── layout.tsx              # Admin layout with sidebar
+│   │   ├── page.tsx                # Admin overview dashboard
+│   │   ├── listings/page.tsx       # Listings management
+│   │   ├── users/page.tsx          # Users management
+│   │   ├── reports/page.tsx        # Reports management
+│   │   └── settings/page.tsx       # Moderation settings
 │   ├── sign-in/[[...sign-in]]/page.tsx
 │   └── sign-up/[[...sign-up]]/page.tsx
 ├── components/
-│   ├── navbar.tsx                  # Top navigation
-│   ├── footer.tsx                  # Site footer (new)
-│   ├── bottom-nav.tsx              # Mobile bottom nav (new)
-│   ├── mobile-search.tsx           # Mobile search (new)
-│   ├── listing-card.tsx            # Listing grid card
-│   ├── category-filter.tsx         # Category tabs
+│   ├── navbar.tsx                  # Top navigation (dark mode)
+│   ├── footer.tsx                  # Site footer (dark mode)
+│   ├── bottom-nav.tsx              # Mobile bottom nav (dark mode)
+│   ├── mobile-search.tsx           # Mobile search (dark mode)
+│   ├── listing-card.tsx            # Listing grid card (dark mode)
+│   ├── category-filter.tsx         # Category tabs (dark mode)
 │   └── providers/
-│       └── convex-provider.tsx
+│       ├── convex-provider.tsx
+│       └── theme-provider.tsx      ← NEW in Sprint 3
 ├── convex/
 │   ├── schema.ts                   # Database schema
 │   ├── users.ts                    # User queries/mutations
 │   ├── listings.ts                 # Listing queries/mutations
 │   ├── messages.ts                 # Messaging queries/mutations
-│   └── files.ts                    # File upload
+│   ├── files.ts                    # File upload
+│   ├── admin.ts                    # Admin queries/mutations (Sprint 4)
+│   ├── settings.ts                 # Settings management (Sprint 4)
+│   └── moderation.ts               # Content moderation utils (Sprint 4)
 ├── hooks/
 │   └── use-store-user.ts           # Sync Clerk user to Convex
 ├── stich/                          # UI design mockups (HTML)
@@ -184,14 +301,29 @@ college-marketplace/
 
 ## Design System
 
-### Colors
+### Colors (Light Mode)
 | Token | Value | Usage |
 |-------|-------|-------|
+| `background` | #f9fafa | Page backgrounds |
+| `foreground` | #121517 | Primary text |
 | `primary` | #28618a | Buttons, links, accents |
-| `accent-mint` | #3ab795 | Success, available badges |
-| `accent-coral` | #e85d5d | Errors, delete actions |
-| `background` | #f8f8f8 | Page backgrounds |
-| `foreground` | #1a1a1a | Primary text |
+| `accent-mint` | #6EE7B7 | Success, verified badges |
+| `accent-coral` | #FF7F66 | Errors, delete actions |
+| `card` | #ffffff | Card backgrounds |
+| `border` | #e5e7eb | Borders, dividers |
+| `muted` | #f3f4f6 | Muted backgrounds |
+
+### Colors (Dark Mode)
+| Token | Value | Usage |
+|-------|-------|-------|
+| `background` | #0f1419 | Page backgrounds |
+| `foreground` | #e7e9ea | Primary text |
+| `primary` | #3b82f6 | Buttons, links, accents |
+| `accent-mint` | #6EE7B7 | Success, verified badges |
+| `accent-coral` | #FF7F66 | Errors, delete actions |
+| `card` | #1a1f26 | Card backgrounds |
+| `border` | #2f3336 | Borders, dividers |
+| `muted` | #1a1f26 | Muted backgrounds |
 
 ### Campus Locations
 - St. James Campus
@@ -223,24 +355,22 @@ CLERK_SECRET_KEY=sk_test_xxx
 ## Running the Project
 
 ```bash
-# Terminal 1: Convex backend
-npx convex dev
-
-# Terminal 2: Next.js frontend
+# Single command runs both Next.js + Convex
 npm run dev
 ```
 
 App runs at: http://localhost:3000
+Admin dashboard: http://localhost:3000/admin
 
 ---
 
 ## Sprint Metrics
 
-| Metric | Sprint 1 | Sprint 2 | Total |
-|--------|----------|----------|-------|
-| Features Completed | 16 | 15 | 31 |
-| Features Pending | - | - | 16 |
-| Completion Rate | 100% | 100% | 66% |
+| Metric | Sprint 1 | Sprint 2 | Sprint 3 | Sprint 4 | Total |
+|--------|----------|----------|----------|----------|-------|
+| Features Completed | 16 | 15 | 11 | 10 | 52 |
+| Features Pending | - | - | - | - | 13 |
+| Completion Rate | 100% | 100% | 100% | 100% | 80% |
 
 ---
 
@@ -250,16 +380,18 @@ App runs at: http://localhost:3000
 2. Set Meeting button is placeholder UI
 3. Image/attachment button in chat is placeholder UI
 4. Search in messages sidebar is placeholder UI
+5. Heart/save button on listings is placeholder UI
+6. Rating display (5.0) on profile is static placeholder
 
 ---
 
 ## Next Sprint Priorities
 
-1. Profile page redesign with Stich design
-2. Edit listing page redesign
-3. Saved/Wishlist functionality
-4. Message filter tabs (Buying/Selling)
-5. Unread message indicators
+1. Saved/Wishlist functionality (heart button + saved page)
+2. Message filter tabs (Buying/Selling)
+3. Unread message indicators
+4. Sort options for listings
+5. Campus and price filters
 
 ---
 
@@ -270,4 +402,4 @@ App runs at: http://localhost:3000
 
 ---
 
-*Last Updated: January 2026 - Sprint 2 Complete*
+*Last Updated: January 2026 - Sprint 4 Complete*
