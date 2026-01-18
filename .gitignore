@@ -13,4 +13,3 @@ next-env.d.ts
 
 # convex
 convex/_generated
-convex/moderation.ts
