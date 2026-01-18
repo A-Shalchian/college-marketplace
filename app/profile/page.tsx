@@ -141,7 +141,7 @@ function ProfileContent() {
                     style={{ backgroundImage: `url(${user.imageUrl})` }}
                   />
                 ) : (
-                  <div className="w-28 h-28 md:w-36 md:h-36 rounded-full bg-gray-200 dark:bg-muted border-4 border-white dark:border-card shadow-xl flex items-center justify-center">
+                  <div className="w-28 h-28 md:w-36 md:h-36 rounded-full bg-primary/10 dark:bg-primary/20 border-4 border-white dark:border-card shadow-xl flex items-center justify-center">
                     <User className="w-12 h-12 text-gray-400" />
                   </div>
                 )}

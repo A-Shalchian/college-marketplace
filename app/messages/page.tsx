@@ -105,7 +105,7 @@ function MessagesContent() {
                         style={{ backgroundImage: `url(${conv.otherUser.imageUrl})` }}
                       />
                     ) : (
-                      <div className="h-14 w-14 shrink-0 rounded-full bg-gray-200 border-2 border-white flex items-center justify-center">
+                      <div className="h-14 w-14 shrink-0 rounded-full bg-primary/10 dark:bg-primary/20 border-2 border-white flex items-center justify-center">
                         <User className="w-6 h-6 text-gray-400" />
                       </div>
                     )}

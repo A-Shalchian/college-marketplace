@@ -185,7 +185,7 @@ export default function AdminUsers() {
                   }`}
                 >
                   <div
-                    className="w-12 h-12 rounded-full bg-cover bg-center bg-gray-200 dark:bg-muted shrink-0"
+                    className="w-12 h-12 rounded-full bg-cover bg-center bg-primary/10 dark:bg-primary/20 shrink-0"
                     style={{
                       backgroundImage: u.imageUrl ? `url(${u.imageUrl})` : undefined,
                     }}
@@ -239,7 +239,7 @@ export default function AdminUsers() {
             <div className="h-[600px] overflow-y-auto">
               <div className="p-6 border-b border-gray-100 dark:border-border flex items-start gap-4">
                 <div
-                  className="w-20 h-20 rounded-full bg-cover bg-center bg-gray-200 dark:bg-muted shrink-0"
+                  className="w-20 h-20 rounded-full bg-cover bg-center bg-primary/10 dark:bg-primary/20 shrink-0"
                   style={{
                     backgroundImage: selected.imageUrl
                       ? `url(${selected.imageUrl})`

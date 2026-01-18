@@ -74,7 +74,7 @@ export function ListingCard({
                   style={{ backgroundImage: `url(${sellerImage})` }}
                 />
               ) : (
-                <div className="w-6 h-6 rounded-full bg-gray-200 dark:bg-muted" />
+                <div className="w-6 h-6 rounded-full bg-primary/10 dark:bg-primary/20" />
               )}
               <span className="text-xs text-muted-foreground font-medium">{sellerName}</span>
             </div>

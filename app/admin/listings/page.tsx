@@ -307,7 +307,7 @@ export default function AdminListings() {
 
                 <div className="flex items-center gap-3 p-4 bg-gray-50 dark:bg-muted rounded-xl">
                   <div
-                    className="w-10 h-10 rounded-full bg-cover bg-center bg-gray-200"
+                    className="w-10 h-10 rounded-full bg-cover bg-center bg-primary/10 dark:bg-primary/20"
                     style={{
                       backgroundImage: selected.seller?.imageUrl
                         ? `url(${selected.seller.imageUrl})`

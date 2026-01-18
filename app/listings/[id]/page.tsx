@@ -304,7 +304,7 @@ function ListingContent({ id }: { id: string }) {
                       style={{ backgroundImage: `url(${listing.seller.imageUrl})` }}
                     />
                   ) : (
-                    <div className="w-14 h-14 md:w-16 md:h-16 rounded-full bg-gray-200 border-4 border-white shadow-sm flex items-center justify-center">
+                    <div className="w-14 h-14 md:w-16 md:h-16 rounded-full bg-primary/10 dark:bg-primary/20 border-4 border-white shadow-sm flex items-center justify-center">
                       <User className="w-6 h-6 text-gray-400" />
                     </div>
                   )}
