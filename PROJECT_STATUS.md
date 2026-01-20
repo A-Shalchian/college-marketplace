@@ -3,7 +3,7 @@
 ## Project Overview
 A college marketplace application exclusively for George Brown College students to buy and sell items within the campus community.
 
-**Tech Stack:** Next.js 15 | React 19 | Convex | Clerk | Tailwind CSS 4
+**Tech Stack:** Next.js 16 | React 19 | Convex | Clerk | Tailwind CSS 4
 
 ---
 
@@ -31,6 +31,13 @@ January 2026
 | **Role System** | user/admin/super_admin roles with access control | ✅ Complete |
 | **Moderation Logs** | Audit trail of all admin actions | ✅ Complete |
 | **Mobile Admin UI** | Responsive admin dashboard with collapsible sidebar | ✅ Complete |
+| **Saved/Wishlist** | Heart button saves items, Saved tab on profile page | ✅ Complete |
+| **Filter Tabs (Messages)** | Filter messages by All/Buying/Selling role | ✅ Complete |
+| **Messages Search** | Search conversations by user name or listing title | ✅ Complete |
+| **Sort Options** | Sort listings by newest, oldest, price low/high | ✅ Complete |
+| **Price Range Filter** | Filter listings by min/max price | ✅ Complete |
+| **Campus Maps** | Google Maps embed for campus locations on sell/listing pages | ✅ Complete |
+| **Draft Listings** | Save/restore listing drafts with localStorage persistence | ✅ Complete |
 
 ---
 
@@ -102,14 +109,10 @@ Enhance user profile experience with settings management, dark mode theming, and
 
 ---
 
-## Sprint 4 Backlog (Next Up)
+## Sprint 4 Backlog (Remaining)
 
 | Feature | Priority | Description |
 |---------|----------|-------------|
-| **Saved/Wishlist Listings** | High | Heart button saves items, dedicated saved page |
-| **Filter Tabs (Buying/Selling)** | High | Filter messages by transaction role |
-| **Sort Options** | High | Sort listings by newest, price low-high, etc. |
-| **Price Range Filter** | High | Filter by min/max price |
 | **Campus Filter** | High | Filter listings by campus location |
 | **Unread Message Badge** | High | Show unread count on messages icon |
 | **Profile Page Stats** | Medium | Real ratings, transaction history |
@@ -165,7 +168,6 @@ If flagged at any layer → Admin review queue
 | **Similar Listings** | Low | Recommendations based on viewing |
 | **Share Listing** | Low | Share to social media |
 | **Listing Expiration** | Low | Auto-hide listings after 30 days |
-| **Draft Listings** | Low | Save draft functionality |
 | **Boost Listing** | Low | Premium visibility feature |
 
 ---
@@ -238,6 +240,11 @@ settings                         ← NEW Sprint 4
 ├── key (string)
 ├── value (string - JSON)
 └── updatedAt (number)
+
+savedListings                    ← NEW Sprint 4
+├── userId (id → users)
+├── listingId (id → listings)
+└── savedAt (number)
 ```
 
 ### Project Structure
@@ -285,9 +292,11 @@ college-marketplace/
 │   ├── files.ts                    # File upload
 │   ├── admin.ts                    # Admin queries/mutations (Sprint 4)
 │   ├── settings.ts                 # Settings management (Sprint 4)
-│   └── moderation.ts               # Content moderation utils (Sprint 4)
+│   ├── moderation.ts               # Content moderation utils (Sprint 4)
+│   └── savedListings.ts            # Wishlist queries/mutations (Sprint 4)
 ├── hooks/
-│   └── use-store-user.ts           # Sync Clerk user to Convex
+│   ├── use-store-user.ts           # Sync Clerk user to Convex
+│   └── use-save-listing.ts         # Save/wishlist functionality (Sprint 4)
 ├── stich/                          # UI design mockups (HTML)
 │   ├── home.html
 │   ├── listing.html
@@ -368,38 +377,34 @@ Admin dashboard: http://localhost:3000/admin
 
 | Metric | Sprint 1 | Sprint 2 | Sprint 3 | Sprint 4 | Total |
 |--------|----------|----------|----------|----------|-------|
-| Features Completed | 16 | 15 | 11 | 10 | 52 |
-| Features Pending | - | - | - | - | 13 |
-| Completion Rate | 100% | 100% | 100% | 100% | 80% |
+| Features Completed | 16 | 15 | 11 | 17 | 59 |
+| Features Pending | - | - | - | 3 | 3 |
+| Completion Rate | 100% | 100% | 100% | 85% | 95% |
 
 ---
 
 ## Known Issues
 
-1. Filter tabs (All/Buying/Selling) in messages are placeholder UI
-2. Set Meeting button is placeholder UI
-3. Image/attachment button in chat is placeholder UI
-4. Search in messages sidebar is placeholder UI
-5. Heart/save button on listings is placeholder UI
-6. Rating display (5.0) on profile is static placeholder
+1. Set Meeting button is placeholder UI
+2. Image/attachment button in chat is placeholder UI
+3. Rating display (5.0) on profile is static placeholder
+4. Load More Items button is placeholder UI
 
 ---
 
 ## Next Sprint Priorities
 
-1. Saved/Wishlist functionality (heart button + saved page)
-2. Message filter tabs (Buying/Selling)
-3. Unread message indicators
-4. Sort options for listings
-5. Campus and price filters
+1. Campus filter for listings
+2. Unread message indicators
+3. Real ratings and transaction history
 
 ---
 
 ## Contributors
 
-- Development: Claude AI + Human Developer
+- Development: Radin MadadNezhad Aligorkeh + Arash Shalchian + Diana Mohammadi
 - Design: Stich UI Mockups
 
 ---
 
-*Last Updated: January 2026 - Sprint 4 Complete*
+*Last Updated: January 2026 - Sprint 4 In Progress (17/20 features complete)*
