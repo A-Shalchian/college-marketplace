@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, Suspense, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { useQuery } from "convex/react";
 import { useUser } from "@clerk/nextjs";
@@ -15,6 +15,8 @@ import { useStoreUser } from "@/hooks/use-store-user";
 import { Loader2, X, ChevronRight, ChevronDown, Shield } from "lucide-react";
 import Link from "next/link";
 
+type SortOption = "newest" | "oldest" | "price_low" | "price_high";
+
 function HomeContent() {
   useStoreUser();
   const { user } = useUser();
@@ -27,18 +29,69 @@ function HomeContent() {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [showMobileSearch, setShowMobileSearch] = useState(searchParams.get("search") === "open");
   const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [sortBy, setSortBy] = useState<SortOption>("newest");
+  const [showSortMenu, setShowSortMenu] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
+  const [minPrice, setMinPrice] = useState("");
+  const [maxPrice, setMaxPrice] = useState("");
+  const sortMenuRef = useRef<HTMLDivElement>(null);
+  const filterMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (sortMenuRef.current && !sortMenuRef.current.contains(event.target as Node)) {
+        setShowSortMenu(false);
+      }
+      if (filterMenuRef.current && !filterMenuRef.current.contains(event.target as Node)) {
+        setShowFilters(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const listings = useQuery(api.listings.getAll);
 
-  const filteredListings = listings?.filter((listing) => {
-    const matchesCategory =
-      selectedCategory === "all" || listing.category === selectedCategory;
-    const matchesSearch =
-      !searchQuery ||
-      listing.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      listing.description.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesCategory && matchesSearch;
-  });
+  const filteredListings = listings
+    ?.filter((listing) => {
+      const matchesCategory =
+        selectedCategory === "all" || listing.category === selectedCategory;
+      const matchesSearch =
+        !searchQuery ||
+        listing.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        listing.description.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesMinPrice = !minPrice || listing.price >= parseFloat(minPrice);
+      const matchesMaxPrice = !maxPrice || listing.price <= parseFloat(maxPrice);
+      return matchesCategory && matchesSearch && matchesMinPrice && matchesMaxPrice;
+    })
+    ?.sort((a, b) => {
+      switch (sortBy) {
+        case "newest":
+          return b.createdAt - a.createdAt;
+        case "oldest":
+          return a.createdAt - b.createdAt;
+        case "price_low":
+          return a.price - b.price;
+        case "price_high":
+          return b.price - a.price;
+        default:
+          return 0;
+      }
+    });
+
+  const sortLabels: Record<SortOption, string> = {
+    newest: "Newest",
+    oldest: "Oldest",
+    price_low: "Price: Low to High",
+    price_high: "Price: High to Low",
+  };
+
+  const clearFilters = () => {
+    setMinPrice("");
+    setMaxPrice("");
+  };
+
+  const hasActiveFilters = minPrice || maxPrice;
 
   const handleCategorySelect = (categoryId: string) => {
     setSelectedCategory(categoryId);
@@ -96,10 +149,83 @@ function HomeContent() {
         <div className="flex items-center justify-between mb-6 md:mb-8">
           <h2 className="text-xl md:text-2xl font-bold">Latest on Campus</h2>
           <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground hidden sm:inline">Sort by:</span>
-            <button className="bg-white dark:bg-card px-3 py-1.5 rounded-lg border border-gray-100 dark:border-border text-sm font-semibold flex items-center gap-1">
-              Newest <ChevronDown className="w-[18px] h-[18px]" />
-            </button>
+            <div className="relative" ref={filterMenuRef}>
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-sm font-semibold transition-colors ${
+                  hasActiveFilters
+                    ? "bg-primary text-white border-primary"
+                    : "bg-white dark:bg-card border-gray-100 dark:border-border hover:bg-gray-50 dark:hover:bg-muted"
+                }`}
+              >
+                {hasActiveFilters ? `$${minPrice || "0"} - $${maxPrice || "∞"}` : "Price"}
+                <ChevronDown className={`w-4 h-4 transition-transform ${showFilters ? "rotate-180" : ""}`} />
+              </button>
+              {showFilters && (
+                <div className="absolute right-0 top-full mt-2 w-64 bg-white dark:bg-card rounded-xl shadow-lg border border-gray-100 dark:border-border z-50 p-4">
+                  <p className="text-sm font-semibold text-muted-foreground mb-3">Price Range</p>
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="relative flex-1">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
+                      <input
+                        type="number"
+                        placeholder="Min"
+                        value={minPrice}
+                        onChange={(e) => setMinPrice(e.target.value)}
+                        className="w-full pl-7 pr-3 py-2 rounded-lg border border-gray-200 dark:border-border bg-background text-sm focus:ring-2 focus:ring-primary/20 outline-none"
+                      />
+                    </div>
+                    <span className="text-muted-foreground">-</span>
+                    <div className="relative flex-1">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
+                      <input
+                        type="number"
+                        placeholder="Max"
+                        value={maxPrice}
+                        onChange={(e) => setMaxPrice(e.target.value)}
+                        className="w-full pl-7 pr-3 py-2 rounded-lg border border-gray-200 dark:border-border bg-background text-sm focus:ring-2 focus:ring-primary/20 outline-none"
+                      />
+                    </div>
+                  </div>
+                  {hasActiveFilters && (
+                    <button
+                      onClick={clearFilters}
+                      className="text-sm font-semibold text-accent-coral hover:underline"
+                    >
+                      Clear filters
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+            <div className="relative" ref={sortMenuRef}>
+              <button
+                onClick={() => setShowSortMenu(!showSortMenu)}
+                className="bg-white dark:bg-card px-3 py-1.5 rounded-lg border border-gray-100 dark:border-border text-sm font-semibold flex items-center gap-1 hover:bg-gray-50 dark:hover:bg-muted transition-colors"
+              >
+                {sortLabels[sortBy]} <ChevronDown className={`w-4 h-4 transition-transform ${showSortMenu ? "rotate-180" : ""}`} />
+              </button>
+              {showSortMenu && (
+                <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-card rounded-xl shadow-lg border border-gray-100 dark:border-border z-50 overflow-hidden">
+                  {(Object.keys(sortLabels) as SortOption[]).map((option) => (
+                    <button
+                      key={option}
+                      onClick={() => {
+                        setSortBy(option);
+                        setShowSortMenu(false);
+                      }}
+                      className={`w-full text-left px-4 py-2.5 text-sm font-medium transition-colors ${
+                        sortBy === option
+                          ? "bg-primary/10 text-primary"
+                          : "hover:bg-gray-50 dark:hover:bg-muted"
+                      }`}
+                    >
+                      {sortLabels[option]}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
