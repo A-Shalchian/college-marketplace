@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useState } from "react";
 import { useQuery } from "convex/react";
 import { useUser } from "@clerk/nextjs";
 import { api } from "@/convex/_generated/api";
@@ -12,12 +12,15 @@ import {
   Loader2,
   MessageSquare,
   Search,
-  Filter,
   Shield,
 } from "lucide-react";
 
+type FilterType = "all" | "buying" | "selling";
+
 function MessagesContent() {
   const { user } = useUser();
+  const [filter, setFilter] = useState<FilterType>("all");
+  const [searchQuery, setSearchQuery] = useState("");
   const currentUser = useQuery(api.users.getCurrentUser, {
     clerkId: user?.id,
   });
@@ -25,6 +28,21 @@ function MessagesContent() {
     api.messages.getUserConversations,
     currentUser ? { userId: currentUser._id } : "skip"
   );
+
+  const filteredConversations = conversations?.filter((conv) => {
+    const matchesFilter =
+      filter === "all" ||
+      (filter === "buying" && conv.buyerId === currentUser?._id) ||
+      (filter === "selling" && conv.sellerId === currentUser?._id);
+
+    const query = searchQuery.toLowerCase().trim();
+    const matchesSearch =
+      !query ||
+      conv.otherUser?.name?.toLowerCase().includes(query) ||
+      conv.listing?.title?.toLowerCase().includes(query);
+
+    return matchesFilter && matchesSearch;
+  });
 
   if (!user) {
     return (
@@ -65,34 +83,54 @@ function MessagesContent() {
           <div className="p-4 space-y-4">
             <div className="flex items-center justify-between">
               <h1 className="text-xl font-bold">Conversations</h1>
-              <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                <Filter className="w-5 h-5 text-gray-500" />
-              </button>
             </div>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
               <input
                 type="text"
                 placeholder="Search chats..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full rounded-xl border-none bg-background py-2.5 pl-10 pr-4 text-sm focus:ring-2 focus:ring-primary/20 outline-none"
               />
             </div>
             <div className="flex gap-2 overflow-x-auto pb-1 hide-scrollbar">
-              <button className="px-4 py-1.5 bg-primary text-white rounded-full text-xs font-bold whitespace-nowrap">
+              <button
+                onClick={() => setFilter("all")}
+                className={`px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-colors ${
+                  filter === "all"
+                    ? "bg-primary text-white"
+                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                }`}
+              >
                 All
               </button>
-              <button className="px-4 py-1.5 bg-gray-100 text-gray-600 rounded-full text-xs font-bold whitespace-nowrap hover:bg-gray-200 transition-colors">
+              <button
+                onClick={() => setFilter("buying")}
+                className={`px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-colors ${
+                  filter === "buying"
+                    ? "bg-primary text-white"
+                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                }`}
+              >
                 Buying
               </button>
-              <button className="px-4 py-1.5 bg-gray-100 text-gray-600 rounded-full text-xs font-bold whitespace-nowrap hover:bg-gray-200 transition-colors">
+              <button
+                onClick={() => setFilter("selling")}
+                className={`px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-colors ${
+                  filter === "selling"
+                    ? "bg-primary text-white"
+                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                }`}
+              >
                 Selling
               </button>
             </div>
           </div>
 
           <div className="flex-1 overflow-y-auto px-2 space-y-1">
-            {conversations && conversations.length > 0 ? (
-              conversations.map((conv) => (
+            {filteredConversations && filteredConversations.length > 0 ? (
+              filteredConversations.map((conv) => (
                 <Link
                   key={conv._id}
                   href={`/messages/${conv._id}`}
@@ -134,9 +172,15 @@ function MessagesContent() {
             ) : (
               <div className="text-center py-16 px-4">
                 <MessageSquare className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500 font-medium">No messages yet</p>
+                <p className="text-gray-500 font-medium">
+                  {filter === "all" && "No messages yet"}
+                  {filter === "buying" && "No buying conversations"}
+                  {filter === "selling" && "No selling conversations"}
+                </p>
                 <p className="text-gray-400 text-sm mt-2">
-                  Start a conversation by contacting a seller
+                  {filter === "all" && "Start a conversation by contacting a seller"}
+                  {filter === "buying" && "Browse listings and message sellers to buy items"}
+                  {filter === "selling" && "Post a listing and wait for buyers to message you"}
                 </p>
               </div>
             )}
