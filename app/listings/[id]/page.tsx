@@ -25,6 +25,7 @@ import {
   Pencil,
   BadgeCheck,
 } from "lucide-react";
+import { useSaveListing } from "@/hooks/use-save-listing";
 
 function ListingContent({ id }: { id: string }) {
   const router = useRouter();
@@ -41,6 +42,12 @@ function ListingContent({ id }: { id: string }) {
     api.messages.getOrCreateConversation
   );
   const updateStatus = useMutation(api.listings.updateStatus);
+
+  const { isSaved, isToggling, canSave, toggleSave } = useSaveListing({
+    listingId: id as Id<"listings">,
+    userId: currentUser?._id,
+    sellerId: listing?.sellerId,
+  });
 
   const handleContactSeller = async () => {
     if (!listing || !currentUser || !listing.seller) return;
@@ -256,9 +263,17 @@ function ListingContent({ id }: { id: string }) {
                         Sign in to Message
                       </Link>
                     )}
-                    <button className="w-full py-3 md:py-4 bg-gray-100 text-foreground rounded-xl font-bold hover:bg-gray-200 transition-all flex items-center justify-center gap-2">
-                      <Heart className="w-5 h-5" />
-                      Save to Wishlist
+                    <button
+                      onClick={toggleSave}
+                      disabled={isToggling || !canSave}
+                      className={`w-full py-3 md:py-4 rounded-xl font-bold transition-all flex items-center justify-center gap-2 ${
+                        isSaved
+                          ? "bg-red-50 text-red-500 border-2 border-red-200 hover:bg-red-100"
+                          : "bg-gray-100 text-foreground hover:bg-gray-200"
+                      } ${isToggling ? "opacity-70" : ""}`}
+                    >
+                      <Heart className={`w-5 h-5 ${isSaved ? "fill-current" : ""}`} />
+                      {isSaved ? "Saved to Wishlist" : "Save to Wishlist"}
                     </button>
                   </div>
                 )}

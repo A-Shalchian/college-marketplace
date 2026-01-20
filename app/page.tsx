@@ -3,6 +3,7 @@
 import { useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { useQuery } from "convex/react";
+import { useUser } from "@clerk/nextjs";
 import { api } from "@/convex/_generated/api";
 import { Navbar } from "@/components/navbar";
 import { ListingCard } from "@/components/listing-card";
@@ -16,7 +17,12 @@ import Link from "next/link";
 
 function HomeContent() {
   useStoreUser();
+  const { user } = useUser();
   const searchParams = useSearchParams();
+  const currentUser = useQuery(
+    api.users.getCurrentUser,
+    user ? { clerkId: user.id } : "skip"
+  );
   const searchQuery = searchParams.get("search") === "open" ? "" : (searchParams.get("search") || "");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [showMobileSearch, setShowMobileSearch] = useState(searchParams.get("search") === "open");
@@ -113,6 +119,8 @@ function HomeContent() {
                 condition={listing.condition}
                 sellerName={listing.seller?.name}
                 sellerImage={listing.seller?.imageUrl}
+                sellerId={listing.sellerId}
+                currentUserId={currentUser?._id}
                 createdAt={listing.createdAt}
               />
             ))}

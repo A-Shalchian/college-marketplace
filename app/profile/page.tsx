@@ -27,9 +27,11 @@ import {
   X,
   Moon,
   Sun,
+  Heart,
 } from "lucide-react";
 import { Id } from "@/convex/_generated/dataModel";
 import { useTheme } from "@/components/providers/theme-provider";
+import { ListingCard } from "@/components/listing-card";
 
 const campuses = [
   "St. James Campus",
@@ -37,7 +39,7 @@ const campuses = [
   "Waterfront Campus",
 ];
 
-type TabType = "active" | "sold";
+type TabType = "active" | "sold" | "saved";
 
 function ProfileContent() {
   const { user } = useUser();
@@ -53,6 +55,10 @@ function ProfileContent() {
   });
   const myListings = useQuery(
     api.listings.getByUser,
+    currentUser ? { userId: currentUser._id } : "skip"
+  );
+  const savedListings = useQuery(
+    api.savedListings.getSavedByUser,
     currentUser ? { userId: currentUser._id } : "skip"
   );
   const deleteListing = useMutation(api.listings.deleteListing);
@@ -117,7 +123,12 @@ function ProfileContent() {
 
   const activeListings = myListings?.filter((l) => l.status === "active") ?? [];
   const soldListings = myListings?.filter((l) => l.status === "sold") ?? [];
-  const displayedListings = activeTab === "active" ? activeListings : soldListings;
+  const displayedListings =
+    activeTab === "active"
+      ? activeListings
+      : activeTab === "sold"
+        ? soldListings
+        : [];
 
   const joinDate = currentUser?.createdAt
     ? new Date(currentUser.createdAt).toLocaleDateString("en-US", {
@@ -265,7 +276,7 @@ function ProfileContent() {
           </div>
         </section>
 
-        <section className="grid grid-cols-3 gap-3 md:gap-6 mb-8 md:mb-12">
+        <section className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 mb-8 md:mb-12">
           <div className="bg-white dark:bg-card p-4 md:p-6 rounded-xl subtle-float border border-gray-100 dark:border-border flex items-center gap-3 md:gap-5">
             <div className="w-10 h-10 md:w-14 md:h-14 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
               <ShoppingBag className="w-5 h-5 md:w-7 md:h-7" />
@@ -282,6 +293,15 @@ function ProfileContent() {
             <div>
               <p className="text-xl md:text-2xl font-extrabold">{soldListings.length}</p>
               <p className="text-[10px] md:text-sm font-medium text-muted-foreground">Sold</p>
+            </div>
+          </div>
+          <div className="bg-white dark:bg-card p-4 md:p-6 rounded-xl subtle-float border border-gray-100 dark:border-border flex items-center gap-3 md:gap-5">
+            <div className="w-10 h-10 md:w-14 md:h-14 rounded-xl bg-red-50 dark:bg-red-500/10 text-red-500 flex items-center justify-center shrink-0">
+              <Heart className="w-5 h-5 md:w-7 md:h-7" />
+            </div>
+            <div>
+              <p className="text-xl md:text-2xl font-extrabold">{savedListings?.length ?? 0}</p>
+              <p className="text-[10px] md:text-sm font-medium text-muted-foreground">Saved</p>
             </div>
           </div>
           <div className="bg-white dark:bg-card p-4 md:p-6 rounded-xl subtle-float border border-gray-100 dark:border-border flex items-center gap-3 md:gap-5">
@@ -332,6 +352,23 @@ function ProfileContent() {
                   {soldListings.length}
                 </span>
               </button>
+              <button
+                onClick={() => setActiveTab("saved")}
+                className={`pb-4 border-b-2 font-bold text-sm flex items-center gap-2 transition-colors ${
+                  activeTab === "saved"
+                    ? "border-primary text-primary"
+                    : "border-transparent text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                Saved Items
+                <span
+                  className={`px-2 py-0.5 rounded-full text-[10px] ${
+                    activeTab === "saved" ? "bg-primary/10" : "bg-gray-100 dark:bg-muted"
+                  }`}
+                >
+                  {savedListings?.length ?? 0}
+                </span>
+              </button>
             </div>
             <div className="hidden md:flex items-center gap-2 text-sm font-semibold text-muted-foreground">
               <span>Sort: Newest</span>
@@ -339,7 +376,38 @@ function ProfileContent() {
             </div>
           </div>
 
-          {displayedListings.length > 0 ? (
+          {activeTab === "saved" ? (
+            savedListings && savedListings.length > 0 ? (
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-6">
+                {savedListings.map((listing) => (
+                  <ListingCard
+                    key={listing._id}
+                    id={listing._id}
+                    title={listing.title}
+                    price={listing.price}
+                    images={listing.imageUrls}
+                    condition={listing.condition}
+                    sellerName={listing.seller?.name}
+                    sellerImage={listing.seller?.imageUrl}
+                    sellerId={listing.sellerId}
+                    currentUserId={currentUser?._id}
+                    createdAt={listing.createdAt}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-16 bg-white dark:bg-card rounded-xl border border-gray-100 dark:border-border">
+                <Heart className="w-12 h-12 text-gray-300 dark:text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground font-medium">No saved items yet</p>
+                <Link
+                  href="/"
+                  className="inline-block mt-4 px-6 py-2 bg-primary text-white rounded-xl font-bold text-sm hover:bg-primary/90 transition-colors"
+                >
+                  Browse Marketplace
+                </Link>
+              </div>
+            )
+          ) : displayedListings.length > 0 ? (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-6">
               {displayedListings.map((listing) => (
                 <div

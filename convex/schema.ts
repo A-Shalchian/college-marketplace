@@ -89,4 +89,13 @@ export default defineSchema({
     value: v.string(),
     updatedAt: v.number(),
   }).index("by_key", ["key"]),
+
+  savedListings: defineTable({
+    userId: v.id("users"),
+    listingId: v.id("listings"),
+    savedAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_listing", ["listingId"])
+    .index("by_user_and_listing", ["userId", "listingId"]),
 });

@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Heart } from "lucide-react";
 import { Id } from "@/convex/_generated/dataModel";
+import { useSaveListing } from "@/hooks/use-save-listing";
 
 interface ListingCardProps {
   id: Id<"listings">;
@@ -13,6 +14,8 @@ interface ListingCardProps {
   condition: string;
   sellerName?: string;
   sellerImage?: string;
+  sellerId?: Id<"users">;
+  currentUserId?: Id<"users"> | null;
   createdAt: number;
 }
 
@@ -24,10 +27,17 @@ export function ListingCard({
   condition,
   sellerName,
   sellerImage,
+  sellerId,
+  currentUserId,
   createdAt,
 }: ListingCardProps) {
   const timeAgo = getTimeAgo(createdAt);
   const conditionStyle = getConditionStyle(condition);
+  const { isSaved, isToggling, canSave, toggleSave } = useSaveListing({
+    listingId: id,
+    userId: currentUserId ?? undefined,
+    sellerId,
+  });
 
   return (
     <Link href={`/listings/${id}`}>
@@ -42,10 +52,19 @@ export function ListingCard({
             <button
               onClick={(e) => {
                 e.preventDefault();
+                e.stopPropagation();
+                if (canSave) toggleSave();
               }}
-              className="bg-white/80 dark:bg-card/80 backdrop-blur-sm w-8 h-8 flex items-center justify-center rounded-full text-gray-600 dark:text-muted-foreground hover:text-red-500 transition-colors"
+              disabled={isToggling || !canSave}
+              className={`bg-white/80 dark:bg-card/80 backdrop-blur-sm w-8 h-8 flex items-center justify-center rounded-full transition-colors ${
+                !canSave
+                  ? "opacity-50 cursor-not-allowed text-gray-400"
+                  : isToggling
+                    ? "opacity-70 text-gray-600"
+                    : "hover:text-red-500"
+              } ${isSaved ? "text-red-500" : "text-gray-600 dark:text-muted-foreground"}`}
             >
-              <Heart className="w-5 h-5" />
+              <Heart className={`w-5 h-5 ${isSaved ? "fill-current" : ""}`} />
             </button>
           </div>
           {images[0] ? (
