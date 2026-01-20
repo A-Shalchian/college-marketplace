@@ -27,6 +27,12 @@ import {
 } from "lucide-react";
 import { useSaveListing } from "@/hooks/use-save-listing";
 
+const campusMapUrls: Record<string, string> = {
+  "St. James Campus": "https://maps.google.com/maps?q=George+Brown+College+St+James+Campus,Toronto&z=15&output=embed",
+  "Casa Loma Campus": "https://maps.google.com/maps?q=George+Brown+College+Casa+Loma+Campus,Toronto&z=15&output=embed",
+  "Waterfront Campus": "https://maps.google.com/maps?q=George+Brown+College+Waterfront+Campus,Toronto&z=15&output=embed",
+};
+
 function ListingContent({ id }: { id: string }) {
   const router = useRouter();
   const { user } = useUser();
@@ -214,6 +220,20 @@ function ListingContent({ id }: { id: string }) {
                       <p className="text-gray-500">Available for meetup at Student Centre</p>
                     </div>
                   </div>
+                  {listing.campus && campusMapUrls[listing.campus] && (
+                    <div className="mt-4 rounded-lg overflow-hidden border border-gray-100">
+                      <iframe
+                        src={campusMapUrls[listing.campus]}
+                        width="100%"
+                        height="150"
+                        style={{ border: 0 }}
+                        allowFullScreen
+                        loading="lazy"
+                        referrerPolicy="no-referrer-when-downgrade"
+                        title={`${listing.campus} Map`}
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

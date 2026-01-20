@@ -29,6 +29,12 @@ const campuses = [
   "Waterfront Campus",
 ];
 
+const campusMapUrls: Record<string, string> = {
+  "St. James Campus": "https://maps.google.com/maps?q=George+Brown+College+St+James+Campus,Toronto&z=15&output=embed",
+  "Casa Loma Campus": "https://maps.google.com/maps?q=George+Brown+College+Casa+Loma+Campus,Toronto&z=15&output=embed",
+  "Waterfront Campus": "https://maps.google.com/maps?q=George+Brown+College+Waterfront+Campus,Toronto&z=15&output=embed",
+};
+
 function SellContent() {
   const router = useRouter();
   const { user } = useUser();
@@ -50,12 +56,65 @@ function SellContent() {
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [draftSaved, setDraftSaved] = useState(false);
+  const [hasDraft, setHasDraft] = useState(false);
 
   useEffect(() => {
-    if (currentUser?.defaultCampus && !campus) {
+    const savedDraft = localStorage.getItem("listingDraft");
+    if (savedDraft) {
+      try {
+        const draft = JSON.parse(savedDraft);
+        setTitle(draft.title || "");
+        setDescription(draft.description || "");
+        setPrice(draft.price || "");
+        setCategory(draft.category || "");
+        setCondition(draft.condition || "");
+        setCampus(draft.campus || "");
+        if (draft.imagePreviews && draft.imagePreviews.length > 0) {
+          setImagePreviews(draft.imagePreviews);
+        }
+        setHasDraft(true);
+      } catch (e) {
+        console.error("Failed to load draft:", e);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (currentUser?.defaultCampus && !campus && !hasDraft) {
       setCampus(currentUser.defaultCampus);
     }
-  }, [currentUser?.defaultCampus, campus]);
+  }, [currentUser?.defaultCampus, campus, hasDraft]);
+
+  const saveDraft = () => {
+    const draft = {
+      title,
+      description,
+      price,
+      category,
+      condition,
+      campus,
+      imagePreviews,
+      savedAt: Date.now(),
+    };
+    localStorage.setItem("listingDraft", JSON.stringify(draft));
+    setDraftSaved(true);
+    setHasDraft(true);
+    setTimeout(() => setDraftSaved(false), 2000);
+  };
+
+  const clearDraft = () => {
+    localStorage.removeItem("listingDraft");
+    setTitle("");
+    setDescription("");
+    setPrice("");
+    setCategory("");
+    setCondition("");
+    setCampus(currentUser?.defaultCampus || "");
+    setImageFiles([]);
+    setImagePreviews([]);
+    setHasDraft(false);
+  };
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -181,6 +240,7 @@ function SellContent() {
         images: storageIds,
       });
 
+      localStorage.removeItem("listingDraft");
       router.push("/");
     } catch (error) {
       console.error("Failed to create listing:", error);
@@ -238,11 +298,28 @@ function SellContent() {
             </p>
           </div>
           <div className="flex gap-3">
+            {hasDraft && (
+              <button
+                type="button"
+                onClick={clearDraft}
+                className="hidden md:flex items-center justify-center rounded-xl h-11 px-4 text-accent-coral font-bold text-sm hover:bg-accent-coral/10 transition-all"
+              >
+                Clear Draft
+              </button>
+            )}
             <button
               type="button"
+              onClick={saveDraft}
               className="hidden md:flex items-center justify-center rounded-xl h-11 px-6 bg-white border border-gray-200 font-bold text-sm hover:bg-gray-50 transition-all"
             >
-              Save Draft
+              {draftSaved ? (
+                <>
+                  <Check className="w-4 h-4 mr-2 text-accent-mint" />
+                  Saved!
+                </>
+              ) : (
+                "Save Draft"
+              )}
             </button>
             <button
               onClick={handleSubmit}
@@ -260,6 +337,33 @@ function SellContent() {
             </button>
           </div>
         </div>
+
+        {hasDraft && (
+          <div className="mb-6 p-4 bg-primary/5 border border-primary/20 rounded-xl flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+              <p className="text-sm font-medium text-primary">
+                Draft restored from your previous session
+              </p>
+            </div>
+            <div className="flex gap-2 md:hidden">
+              <button
+                type="button"
+                onClick={clearDraft}
+                className="px-3 py-1.5 text-accent-coral font-semibold text-sm hover:bg-accent-coral/10 rounded-lg transition-all"
+              >
+                Clear
+              </button>
+              <button
+                type="button"
+                onClick={saveDraft}
+                className="px-3 py-1.5 bg-white border border-gray-200 font-semibold text-sm rounded-lg hover:bg-gray-50 transition-all"
+              >
+                {draftSaved ? "Saved!" : "Save"}
+              </button>
+            </div>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit}>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
@@ -470,16 +574,29 @@ function SellContent() {
               <div className="bg-white rounded-xl p-5 md:p-6 border border-gray-100 shadow-sm">
                 <h4 className="font-bold mb-4">Campus Location</h4>
                 <div className="rounded-lg h-32 md:h-40 bg-gray-100 mb-4 overflow-hidden relative">
-                  <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-primary/10" />
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <MapPin className="w-8 h-8 md:w-10 md:h-10 text-primary" />
-                  </div>
+                  {campus && campusMapUrls[campus] ? (
+                    <iframe
+                      src={campusMapUrls[campus]}
+                      className="w-full h-full border-0"
+                      loading="lazy"
+                      referrerPolicy="no-referrer-when-downgrade"
+                      title={`${campus} Map`}
+                    />
+                  ) : (
+                    <>
+                      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-primary/10" />
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <MapPin className="w-8 h-8 md:w-10 md:h-10 text-primary" />
+                      </div>
+                    </>
+                  )}
                 </div>
                 <select
                   value={campus}
                   onChange={(e) => setCampus(e.target.value)}
                   className="w-full h-11 rounded-lg border border-gray-200 bg-white px-4 text-sm font-medium focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none"
                 >
+                  <option value="">Choose a campus</option>
                   {campuses.map((c) => (
                     <option key={c} value={c}>
                       {c}
