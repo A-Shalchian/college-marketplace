@@ -43,8 +43,11 @@ function ListingContent({ id }: { id: string }) {
   const currentUser = useQuery(api.users.getCurrentUser, {
     clerkId: user?.id,
   });
-  const getOrCreateConversation = useMutation(
-    api.messages.getOrCreateConversation
+  const existingConversation = useQuery(
+    api.messages.getExistingConversation,
+    currentUser && listing
+      ? { listingId: id as Id<"listings">, buyerId: currentUser._id }
+      : "skip"
   );
   const updateStatus = useMutation(api.listings.updateStatus);
 
@@ -54,16 +57,16 @@ function ListingContent({ id }: { id: string }) {
     sellerId: listing?.sellerId,
   });
 
-  const handleContactSeller = async () => {
+  const handleContactSeller = () => {
     if (!listing || !currentUser || !listing.seller) return;
 
-    const conversationId = await getOrCreateConversation({
-      listingId: listing._id,
-      buyerId: currentUser._id,
-      sellerId: listing.seller._id,
-    });
-
-    router.push(`/messages/${conversationId}`);
+    // If conversation exists, go directly to it
+    if (existingConversation) {
+      router.push(`/messages/${existingConversation}`);
+    } else {
+      // Otherwise, go to new message page with listing info
+      router.push(`/messages/new?listing=${listing._id}&seller=${listing.seller._id}`);
+    }
   };
 
   if (listing === undefined) {

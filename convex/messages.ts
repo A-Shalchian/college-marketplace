@@ -2,6 +2,24 @@ import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { Id } from "./_generated/dataModel";
 
+// Check if a conversation exists (without creating one)
+export const getExistingConversation = query({
+  args: {
+    listingId: v.id("listings"),
+    buyerId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    const existing = await ctx.db
+      .query("conversations")
+      .withIndex("by_listing", (q) => q.eq("listingId", args.listingId))
+      .filter((q) => q.eq(q.field("buyerId"), args.buyerId))
+      .unique();
+
+    return existing?._id ?? null;
+  },
+});
+
+// Only used when there's already a conversation with messages
 export const getOrCreateConversation = mutation({
   args: {
     listingId: v.id("listings"),
@@ -32,23 +50,54 @@ export const getOrCreateConversation = mutation({
 
 export const sendMessage = mutation({
   args: {
-    conversationId: v.id("conversations"),
+    conversationId: v.optional(v.id("conversations")),
+    // These are required when creating a new conversation
+    listingId: v.optional(v.id("listings")),
+    buyerId: v.optional(v.id("users")),
+    sellerId: v.optional(v.id("users")),
     senderId: v.id("users"),
     content: v.string(),
   },
   handler: async (ctx, args) => {
+    let conversationId = args.conversationId;
+
+    // If no conversationId, create the conversation now (on first message)
+    if (!conversationId) {
+      if (!args.listingId || !args.buyerId || !args.sellerId) {
+        throw new Error("listingId, buyerId, and sellerId are required when creating a new conversation");
+      }
+
+      // Check if conversation already exists
+      const existing = await ctx.db
+        .query("conversations")
+        .withIndex("by_listing", (q) => q.eq("listingId", args.listingId!))
+        .filter((q) => q.eq(q.field("buyerId"), args.buyerId!))
+        .unique();
+
+      if (existing) {
+        conversationId = existing._id;
+      } else {
+        conversationId = await ctx.db.insert("conversations", {
+          listingId: args.listingId,
+          buyerId: args.buyerId,
+          sellerId: args.sellerId,
+          lastMessageAt: Date.now(),
+        });
+      }
+    }
+
     const messageId = await ctx.db.insert("messages", {
-      conversationId: args.conversationId,
+      conversationId,
       senderId: args.senderId,
       content: args.content,
       createdAt: Date.now(),
     });
 
-    await ctx.db.patch(args.conversationId, {
+    await ctx.db.patch(conversationId, {
       lastMessageAt: Date.now(),
     });
 
-    return messageId;
+    return { messageId, conversationId };
   },
 });
 
@@ -113,7 +162,12 @@ export const getUserConversations = query({
       })
     );
 
-    return conversationsWithDetails.sort(
+    // Only show conversations that have at least one message
+    const conversationsWithMessages = conversationsWithDetails.filter(
+      (conv) => conv.lastMessage !== null
+    );
+
+    return conversationsWithMessages.sort(
       (a, b) => b.lastMessageAt - a.lastMessageAt
     );
   },
