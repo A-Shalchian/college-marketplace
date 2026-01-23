@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { UserButton, SignInButton, useUser } from "@clerk/nextjs";
-import { Store, Search, PlusCircle, User } from "lucide-react";
+import { Store, Search, PlusCircle, User, Menu, X, Home, MessageCircle } from "lucide-react";
 import { useState, useEffect } from "react";
 
 export function Navbar() {
@@ -11,6 +11,7 @@ export function Navbar() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [searchQuery, setSearchQuery] = useState(searchParams.get("search") || "");
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     setSearchQuery(searchParams.get("search") || "");
@@ -102,8 +103,95 @@ export function Navbar() {
               </button>
             </SignInButton>
           )}
+
+          {/* Mobile hamburger menu button */}
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="md:hidden p-2 text-muted-foreground hover:text-foreground transition-colors"
+            aria-label="Toggle menu"
+          >
+            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          </button>
         </div>
       </div>
+
+      {/* Mobile menu overlay */}
+      {mobileMenuOpen && (
+        <div className="md:hidden bg-white dark:bg-[#0f1419] border-b border-gray-100 dark:border-border">
+          <div className="px-6 py-4 space-y-4">
+            {/* Mobile search */}
+            <form onSubmit={handleSearch} className="relative">
+              <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-muted-foreground">
+                <Search className="w-5 h-5" />
+              </div>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search textbooks, electronics, furniture..."
+                className="w-full h-12 pl-12 pr-4 bg-gray-100 dark:bg-muted border-none rounded-xl focus:ring-2 focus:ring-primary/20 placeholder:text-muted-foreground transition-all"
+              />
+            </form>
+
+            {/* Mobile nav links */}
+            <nav className="space-y-1">
+              <Link
+                href="/"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center gap-3 px-4 py-3 rounded-xl text-foreground hover:bg-gray-100 dark:hover:bg-muted transition-colors"
+              >
+                <Home className="w-5 h-5" />
+                <span className="font-medium">Home</span>
+              </Link>
+
+              {isLoaded && isSignedIn ? (
+                <>
+                  <Link
+                    href="/sell"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-foreground hover:bg-gray-100 dark:hover:bg-muted transition-colors"
+                  >
+                    <PlusCircle className="w-5 h-5" />
+                    <span className="font-medium">Post Item</span>
+                  </Link>
+                  <Link
+                    href="/messages"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-foreground hover:bg-gray-100 dark:hover:bg-muted transition-colors"
+                  >
+                    <MessageCircle className="w-5 h-5" />
+                    <span className="font-medium">Messages</span>
+                  </Link>
+                  <Link
+                    href="/profile"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-foreground hover:bg-gray-100 dark:hover:bg-muted transition-colors"
+                  >
+                    <User className="w-5 h-5" />
+                    <span className="font-medium">Profile</span>
+                  </Link>
+                  <Link
+                    href="/profile#listings"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-foreground hover:bg-gray-100 dark:hover:bg-muted transition-colors"
+                  >
+                    <Store className="w-5 h-5" />
+                    <span className="font-medium">My Listings</span>
+                  </Link>
+                </>
+              ) : (
+                <div className="px-4 py-3">
+                  <SignInButton mode="modal">
+                    <button className="w-full flex items-center justify-center gap-2 bg-primary text-white px-5 py-3 rounded-xl font-bold text-sm hover:bg-primary/90 transition-all">
+                      Sign In
+                    </button>
+                  </SignInButton>
+                </div>
+              )}
+            </nav>
+          </div>
+        </div>
+      )}
     </header>
   );
 }

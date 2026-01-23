@@ -8,7 +8,6 @@ import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
-import { BottomNav } from "@/components/bottom-nav";
 import Link from "next/link";
 import {
   Loader2,
@@ -91,7 +90,6 @@ function ListingContent({ id }: { id: string }) {
             Back to Marketplace
           </Link>
         </div>
-        <BottomNav />
       </div>
     );
   }
@@ -126,7 +124,7 @@ function ListingContent({ id }: { id: string }) {
     : new Date().getFullYear();
 
   return (
-    <div className="min-h-screen bg-background pb-20 md:pb-0">
+    <div className="min-h-screen bg-background">
       <Navbar />
 
       <main className="max-w-[1280px] mx-auto px-4 md:px-6 py-6 md:py-8">
@@ -389,8 +387,6 @@ function ListingContent({ id }: { id: string }) {
       <div className="hidden md:block">
         <Footer />
       </div>
-
-      <BottomNav />
     </div>
   );
 }

@@ -7,7 +7,6 @@ import { useRouter } from "next/navigation";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { Navbar } from "@/components/navbar";
-import { BottomNav } from "@/components/bottom-nav";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -97,7 +96,6 @@ function ConversationContent({ id }: { id: string }) {
             Back to messages
           </Link>
         </div>
-        <BottomNav />
       </div>
     );
   }
@@ -412,10 +410,6 @@ function ConversationContent({ id }: { id: string }) {
             </form>
           </div>
         </section>
-      </div>
-
-      <div className="md:hidden">
-        <BottomNav />
       </div>
     </div>
   );

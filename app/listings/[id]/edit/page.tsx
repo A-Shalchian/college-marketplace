@@ -8,7 +8,6 @@ import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
-import { BottomNav } from "@/components/bottom-nav";
 import { categories } from "@/components/category-filter";
 import {
   Camera,
@@ -243,7 +242,6 @@ function EditListingContent({ id }: { id: string }) {
             Back to home
           </Link>
         </div>
-        <BottomNav />
       </div>
     );
   }
@@ -258,7 +256,6 @@ function EditListingContent({ id }: { id: string }) {
             Back to home
           </Link>
         </div>
-        <BottomNav />
       </div>
     );
   }
@@ -267,7 +264,7 @@ function EditListingContent({ id }: { id: string }) {
   const totalImages = existingImages.length + newImageFiles.length;
 
   return (
-    <div className="min-h-screen bg-background pb-20 md:pb-0">
+    <div className="min-h-screen bg-background">
       <Navbar />
 
       <main className="max-w-[1200px] mx-auto px-4 md:px-6 py-6 md:py-8">
@@ -626,8 +623,6 @@ function EditListingContent({ id }: { id: string }) {
       <div className="hidden md:block">
         <Footer />
       </div>
-
-      <BottomNav />
     </div>
   );
 }

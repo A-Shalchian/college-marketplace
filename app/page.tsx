@@ -9,7 +9,6 @@ import { Navbar } from "@/components/navbar";
 import { ListingCard } from "@/components/listing-card";
 import { CategoryFilter, categories } from "@/components/category-filter";
 import { Footer } from "@/components/footer";
-import { BottomNav } from "@/components/bottom-nav";
 import { MobileSearch } from "@/components/mobile-search";
 import { useStoreUser } from "@/hooks/use-store-user";
 import { Loader2, X, ChevronRight, ChevronDown, Shield } from "lucide-react";
@@ -99,7 +98,7 @@ function HomeContent() {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-20 md:pb-0">
+    <div className="min-h-screen bg-background">
       <Navbar />
 
       <main className="max-w-[1280px] mx-auto px-4 md:px-6 py-6 md:py-8">
@@ -276,8 +275,6 @@ function HomeContent() {
       <div className="hidden md:block">
         <Footer />
       </div>
-
-      <BottomNav onSearchClick={() => setShowMobileSearch(true)} />
 
       <MobileSearch
         isOpen={showMobileSearch}

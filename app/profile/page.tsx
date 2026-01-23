@@ -6,7 +6,6 @@ import { useUser, useClerk } from "@clerk/nextjs";
 import { api } from "@/convex/_generated/api";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
-import { BottomNav } from "@/components/bottom-nav";
 import Link from "next/link";
 import {
   User,
@@ -128,24 +127,22 @@ function ProfileContent() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-background pb-20 md:pb-0">
+      <div className="min-h-screen bg-background">
         <Navbar />
         <div className="max-w-[1200px] mx-auto px-6 py-20 text-center">
           <p className="text-gray-500">Please sign in to view your profile</p>
         </div>
-        <BottomNav />
       </div>
     );
   }
 
   if (currentUser === undefined || myListings === undefined) {
     return (
-      <div className="min-h-screen bg-background pb-20 md:pb-0">
+      <div className="min-h-screen bg-background">
         <Navbar />
         <div className="flex justify-center items-center py-20">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
-        <BottomNav />
       </div>
     );
   }
@@ -186,7 +183,7 @@ function ProfileContent() {
     : "Recently";
 
   return (
-    <div className="min-h-screen bg-background pb-20 md:pb-0">
+    <div className="min-h-screen bg-background">
       <Navbar />
 
       <main className="max-w-[1200px] mx-auto px-4 md:px-6 py-6 md:py-10">
@@ -627,8 +624,6 @@ function ProfileContent() {
       <div className="hidden md:block">
         <Footer />
       </div>
-
-      <BottomNav />
 
       {showHelpModal && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">

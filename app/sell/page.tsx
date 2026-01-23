@@ -7,7 +7,6 @@ import { useUser } from "@clerk/nextjs";
 import { api } from "@/convex/_generated/api";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
-import { BottomNav } from "@/components/bottom-nav";
 import { categories } from "@/components/category-filter";
 import {
   Camera,
@@ -255,7 +254,7 @@ function SellContent() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-background pb-20 md:pb-0">
+      <div className="min-h-screen bg-background">
         <Navbar />
         <div className="max-w-[1200px] mx-auto px-6 py-20 text-center">
           <p className="text-gray-500">Please sign in to create a listing</p>
@@ -266,13 +265,12 @@ function SellContent() {
             Sign In
           </Link>
         </div>
-        <BottomNav />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background pb-20 md:pb-0">
+    <div className="min-h-screen bg-background">
       <Navbar />
 
       <main className="max-w-[1200px] mx-auto px-4 md:px-6 py-6 md:py-8">
@@ -642,8 +640,6 @@ function SellContent() {
       <div className="hidden md:block">
         <Footer />
       </div>
-
-      <BottomNav />
     </div>
   );
 }
