@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useUser } from "@clerk/nextjs";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
@@ -18,11 +17,12 @@ import {
   X,
   ChevronDown,
 } from "lucide-react";
+import { useAdminContext } from "../AdminContext";
 
 type FilterType = "all" | "active" | "flagged" | "rejected" | "removed";
 
 export default function AdminListings() {
-  const { user } = useUser();
+  const { adminId } = useAdminContext();
   const searchParams = useSearchParams();
   const initialFilter = (searchParams.get("filter") as FilterType) || "all";
 
@@ -35,8 +35,7 @@ export default function AdminListings() {
   const [rejectReason, setRejectReason] = useState("");
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
 
-  const currentUser = useQuery(api.users.getCurrentUser, { clerkId: user?.id });
-  const listings = useQuery(api.admin.getAllListings);
+  const listings = useQuery(api.admin.getAllListings, {});
 
   const approveListing = useMutation(api.admin.approveListing);
   const rejectListing = useMutation(api.admin.rejectListing);
@@ -62,25 +61,34 @@ export default function AdminListings() {
   const selected = listings?.find((l) => l._id === selectedListing);
 
   const handleApprove = async (listingId: Id<"listings">) => {
-    if (!currentUser) return;
-    await approveListing({ listingId, adminId: currentUser._id });
+    try {
+      await approveListing({ listingId });
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Failed to approve listing");
+    }
   };
 
   const handleReject = async () => {
-    if (!currentUser || !selectedListing) return;
-    await rejectListing({
-      listingId: selectedListing as Id<"listings">,
-      adminId: currentUser._id,
-      reason: rejectReason,
-    });
-    setShowRejectModal(false);
-    setRejectReason("");
-    setSelectedListing(null);
+    if (!selectedListing) return;
+    try {
+      await rejectListing({
+        listingId: selectedListing as Id<"listings">,
+        reason: rejectReason,
+      });
+      setShowRejectModal(false);
+      setRejectReason("");
+      setSelectedListing(null);
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Failed to reject listing");
+    }
   };
 
   const handleRemove = async (listingId: Id<"listings">, reason: string) => {
-    if (!currentUser) return;
-    await removeListing({ listingId, adminId: currentUser._id, reason });
+    try {
+      await removeListing({ listingId, reason });
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Failed to remove listing");
+    }
   };
 
   const filterOptions: { value: FilterType; label: string; count?: number }[] = [

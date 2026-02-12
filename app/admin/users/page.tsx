@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useUser } from "@clerk/nextjs";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
@@ -19,11 +18,12 @@ import {
   Crown,
   Ban,
 } from "lucide-react";
+import { useAdminContext } from "../AdminContext";
 
 type FilterType = "all" | "active" | "banned" | "admins";
 
 export default function AdminUsers() {
-  const { user } = useUser();
+  const { adminId } = useAdminContext();
   const [filter, setFilter] = useState<FilterType>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
@@ -32,8 +32,7 @@ export default function AdminUsers() {
   const [showRoleModal, setShowRoleModal] = useState(false);
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
 
-  const currentUser = useQuery(api.users.getCurrentUser, { clerkId: user?.id });
-  const users = useQuery(api.admin.getAllUsers);
+  const users = useQuery(api.admin.getAllUsers, {});
 
   const banUser = useMutation(api.admin.banUser);
   const unbanUser = useMutation(api.admin.unbanUser);
@@ -58,37 +57,49 @@ export default function AdminUsers() {
   const selected = users?.find((u) => u._id === selectedUser);
 
   const handleBan = async () => {
-    if (!currentUser || !selectedUser) return;
-    await banUser({
-      userId: selectedUser as Id<"users">,
-      adminId: currentUser._id,
-      reason: banReason,
-    });
-    setShowBanModal(false);
-    setBanReason("");
+    if (!selectedUser) return;
+    try {
+      await banUser({
+        userId: selectedUser as Id<"users">,
+        reason: banReason,
+      });
+      setShowBanModal(false);
+      setBanReason("");
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Failed to ban user");
+    }
   };
 
   const handleUnban = async (userId: Id<"users">) => {
-    if (!currentUser) return;
-    await unbanUser({ userId, adminId: currentUser._id });
+    try {
+      await unbanUser({ userId });
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Failed to unban user");
+    }
   };
 
   const handleWarn = async (userId: Id<"users">) => {
-    if (!currentUser) return;
     const reason = prompt("Reason for warning:");
     if (reason) {
-      await warnUser({ userId, adminId: currentUser._id, reason });
+      try {
+        await warnUser({ userId, reason });
+      } catch (error) {
+        alert(error instanceof Error ? error.message : "Failed to warn user");
+      }
     }
   };
 
   const handleSetRole = async (role: string) => {
-    if (!currentUser || !selectedUser) return;
-    await setUserRole({
-      userId: selectedUser as Id<"users">,
-      adminId: currentUser._id,
-      role,
-    });
-    setShowRoleModal(false);
+    if (!selectedUser) return;
+    try {
+      await setUserRole({
+        userId: selectedUser as Id<"users">,
+        role,
+      });
+      setShowRoleModal(false);
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Failed to change role");
+    }
   };
 
   const filterOptions: { value: FilterType; label: string; count?: number }[] = [

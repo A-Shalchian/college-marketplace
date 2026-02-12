@@ -16,6 +16,7 @@ import {
   BadgeAlert,
   Code,
 } from "lucide-react";
+import { useAdminContext } from "../AdminContext";
 
 const categories = [
   { id: "drugs", label: "Drugs & Substances", icon: Pill, color: "text-purple-600 bg-purple-100 dark:bg-purple-900/20" },
@@ -26,6 +27,7 @@ const categories = [
 ];
 
 export default function AdminSettings() {
+  const { adminId } = useAdminContext();
   const blocklist = useQuery(api.settings.getBlocklist);
   const initializeBlocklist = useMutation(api.settings.initializeBlocklist);
   const updateBlocklist = useMutation(api.settings.updateBlocklist);
@@ -43,7 +45,11 @@ export default function AdminSettings() {
   }, [blocklist]);
 
   const handleInitialize = async () => {
-    await initializeBlocklist({});
+    try {
+      await initializeBlocklist({});
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Failed to initialize blocklist");
+    }
   };
 
   const handleAddKeyword = () => {
@@ -68,12 +74,17 @@ export default function AdminSettings() {
 
   const handleSave = async () => {
     setSaving(true);
-    await updateBlocklist({
-      category: activeCategory,
-      keywords: keywords[activeCategory] || [],
-    });
-    setSaving(false);
-    setHasChanges(false);
+    try {
+      await updateBlocklist({
+        category: activeCategory,
+        keywords: keywords[activeCategory] || [],
+      });
+      setHasChanges(false);
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Failed to save changes");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const isEmpty = !blocklist || Object.values(blocklist).every((arr) => (arr as string[]).length === 0);

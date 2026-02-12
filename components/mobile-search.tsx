@@ -27,8 +27,8 @@ export function MobileSearch({ isOpen, onClose, initialQuery = "" }: MobileSearc
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
-  const listings = useQuery(api.listings.getAll);
-  const recentListings = listings?.slice(0, 4);
+  const listingsData = useQuery(api.listings.getAll, {});
+  const recentListings = listingsData?.page?.slice(0, 4);
 
   useEffect(() => {
     if (isOpen && inputRef.current) {

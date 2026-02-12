@@ -15,11 +15,14 @@ import {
   Clock,
 } from "lucide-react";
 import Link from "next/link";
+import { useAdminContext } from "./AdminContext";
 
 export default function AdminDashboard() {
-  const stats = useQuery(api.admin.getStats);
-  const recentActivity = useQuery(api.admin.getRecentActivity);
-  const flaggedListings = useQuery(api.admin.getFlaggedListings);
+  const { adminId, isLoading: adminLoading } = useAdminContext();
+
+  const stats = useQuery(api.admin.getStats, {});
+  const recentActivity = useQuery(api.admin.getRecentActivity, {});
+  const flaggedListings = useQuery(api.admin.getFlaggedListings, {});
 
   if (!stats) {
     return (

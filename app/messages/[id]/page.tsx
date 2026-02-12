@@ -34,12 +34,14 @@ function ConversationContent({ id }: { id: string }) {
   const currentUser = useQuery(api.users.getCurrentUser, {
     clerkId: user?.id,
   });
-  const conversation = useQuery(api.messages.getConversationById, {
-    conversationId: id as Id<"conversations">,
-  });
-  const messages = useQuery(api.messages.getMessages, {
-    conversationId: id as Id<"conversations">,
-  });
+  const conversation = useQuery(
+    api.messages.getConversationById,
+    currentUser ? { conversationId: id as Id<"conversations">, userId: currentUser._id } : "skip"
+  );
+  const messages = useQuery(
+    api.messages.getMessages,
+    currentUser ? { conversationId: id as Id<"conversations">, userId: currentUser._id } : "skip"
+  );
   const conversations = useQuery(
     api.messages.getUserConversations,
     currentUser ? { userId: currentUser._id } : "skip"
@@ -48,7 +50,7 @@ function ConversationContent({ id }: { id: string }) {
   const updateStatus = useMutation(api.listings.updateStatus);
 
   const handleMarkAsSold = async () => {
-    if (!conversation?.listing?._id) return;
+    if (!conversation?.listing?._id || !currentUser) return;
     await updateStatus({
       listingId: conversation.listing._id as Id<"listings">,
       status: "sold",

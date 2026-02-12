@@ -29,6 +29,10 @@ const campuses = [
   "Waterfront Campus",
 ];
 
+const MAX_FILE_SIZE = 5 * 1024 * 1024;
+const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+const MAX_IMAGES = 10;
+
 function EditListingContent({ id }: { id: string }) {
   const router = useRouter();
   const { user } = useUser();
@@ -76,14 +80,34 @@ function EditListingContent({ id }: { id: string }) {
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     const totalImages = existingImages.length + newImageFiles.length + files.length;
-    if (totalImages > 10) {
-      alert("Maximum 10 images allowed");
+    if (totalImages > MAX_IMAGES) {
+      alert(`Maximum ${MAX_IMAGES} images allowed`);
       return;
     }
 
-    setNewImageFiles((prev) => [...prev, ...files]);
+    const validFiles: File[] = [];
+    for (const file of files) {
+      if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+        alert(`"${file.name}" is not a valid image type. Only JPEG, PNG, and WebP are allowed.`);
+        continue;
+      }
+      if (file.size > MAX_FILE_SIZE) {
+        const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
+        alert(`"${file.name}" is too large (${sizeMB}MB). Maximum size is 5MB.`);
+        continue;
+      }
+      if (file.size === 0) {
+        alert(`"${file.name}" is empty.`);
+        continue;
+      }
+      validFiles.push(file);
+    }
 
-    files.forEach((file) => {
+    if (validFiles.length === 0) return;
+
+    setNewImageFiles((prev) => [...prev, ...validFiles]);
+
+    validFiles.forEach((file) => {
       const reader = new FileReader();
       reader.onload = (e) => {
         setNewImagePreviews((prev) => [...prev, e.target?.result as string]);
@@ -94,18 +118,36 @@ function EditListingContent({ id }: { id: string }) {
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
-    const files = Array.from(e.dataTransfer.files).filter((f) =>
-      f.type.startsWith("image/")
-    );
+    const files = Array.from(e.dataTransfer.files);
     const totalImages = existingImages.length + newImageFiles.length + files.length;
-    if (totalImages > 10) {
-      alert("Maximum 10 images allowed");
+    if (totalImages > MAX_IMAGES) {
+      alert(`Maximum ${MAX_IMAGES} images allowed`);
       return;
     }
 
-    setNewImageFiles((prev) => [...prev, ...files]);
+    const validFiles: File[] = [];
+    for (const file of files) {
+      if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+        alert(`"${file.name}" is not a valid image type. Only JPEG, PNG, and WebP are allowed.`);
+        continue;
+      }
+      if (file.size > MAX_FILE_SIZE) {
+        const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
+        alert(`"${file.name}" is too large (${sizeMB}MB). Maximum size is 5MB.`);
+        continue;
+      }
+      if (file.size === 0) {
+        alert(`"${file.name}" is empty.`);
+        continue;
+      }
+      validFiles.push(file);
+    }
 
-    files.forEach((file) => {
+    if (validFiles.length === 0) return;
+
+    setNewImageFiles((prev) => [...prev, ...validFiles]);
+
+    validFiles.forEach((file) => {
       const reader = new FileReader();
       reader.onload = (e) => {
         setNewImagePreviews((prev) => [...prev, e.target?.result as string]);
@@ -161,6 +203,23 @@ function EditListingContent({ id }: { id: string }) {
       newErrors.images = "At least one image is required";
     }
 
+    for (let i = 0; i < newImageFiles.length; i++) {
+      const file = newImageFiles[i];
+      if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+        newErrors.images = `Invalid file type for "${file.name}". Only JPEG, PNG, and WebP images are allowed.`;
+        break;
+      }
+      if (file.size > MAX_FILE_SIZE) {
+        const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
+        newErrors.images = `File "${file.name}" is too large (${sizeMB}MB). Maximum size is 5MB.`;
+        break;
+      }
+      if (file.size === 0) {
+        newErrors.images = `File "${file.name}" is empty.`;
+        break;
+      }
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -172,18 +231,18 @@ function EditListingContent({ id }: { id: string }) {
 
     setIsSubmitting(true);
     try {
-      const newStorageIds: string[] = [];
-
-      for (const file of newImageFiles) {
-        const uploadUrl = await generateUploadUrl();
+      const uploadPromises = newImageFiles.map(async (file) => {
+        const uploadUrl = await generateUploadUrl({ userId: currentUser._id });
         const result = await fetch(uploadUrl, {
           method: "POST",
           headers: { "Content-Type": file.type },
           body: file,
         });
         const { storageId } = await result.json();
-        newStorageIds.push(storageId);
-      }
+        return storageId;
+      });
+
+      const newStorageIds = await Promise.all(uploadPromises);
 
       await updateListing({
         listingId: listing._id,
@@ -206,7 +265,7 @@ function EditListingContent({ id }: { id: string }) {
   };
 
   const handleDelete = async () => {
-    if (!listing) return;
+    if (!listing || !currentUser) return;
     if (!confirm("Are you sure you want to delete this listing? This cannot be undone.")) return;
 
     setIsDeleting(true);
@@ -408,7 +467,7 @@ function EditListingContent({ id }: { id: string }) {
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept="image/*"
+                  accept="image/jpeg,image/png,image/webp"
                   multiple
                   onChange={handleImageSelect}
                   className="hidden"

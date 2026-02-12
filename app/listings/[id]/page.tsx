@@ -305,7 +305,7 @@ function ListingContent({ id }: { id: string }) {
                       <>
                         <button
                           onClick={() =>
-                            updateStatus({ listingId: listing._id, status: "sold" })
+                            currentUser && updateStatus({ listingId: listing._id, status: "sold" })
                           }
                           className="w-full py-3 md:py-4 bg-accent-mint text-white rounded-xl font-bold hover:bg-accent-mint/90 transition-all flex items-center justify-center gap-2"
                         >

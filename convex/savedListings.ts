@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { Id } from "./_generated/dataModel";
+import { requireActiveUser, checkRateLimit } from "./security";
 
 export const toggleSave = mutation({
   args: {
@@ -8,6 +9,10 @@ export const toggleSave = mutation({
     listingId: v.id("listings"),
   },
   handler: async (ctx, args) => {
+    await requireActiveUser(ctx, args.userId);
+
+    await checkRateLimit(ctx, args.userId, "updateUser");
+
     const listing = await ctx.db.get(args.listingId);
     if (!listing) {
       throw new Error("Listing not found");
@@ -15,6 +20,10 @@ export const toggleSave = mutation({
 
     if (listing.sellerId === args.userId) {
       throw new Error("Cannot save your own listing");
+    }
+
+    if (listing.status !== "active") {
+      throw new Error("Cannot save inactive listings");
     }
 
     const existing = await ctx.db
@@ -104,5 +113,29 @@ export const getSavedListingIds = query({
       .collect();
 
     return savedRecords.map((record) => record.listingId);
+  },
+});
+
+export const unsave = mutation({
+  args: {
+    userId: v.id("users"),
+    listingId: v.id("listings"),
+  },
+  handler: async (ctx, args) => {
+    // SECURITY: Verify user exists and is not banned
+    await requireActiveUser(ctx, args.userId);
+
+    const existing = await ctx.db
+      .query("savedListings")
+      .withIndex("by_user_and_listing", (q) =>
+        q.eq("userId", args.userId).eq("listingId", args.listingId)
+      )
+      .unique();
+
+    if (existing) {
+      await ctx.db.delete(existing._id);
+    }
+
+    return { saved: false };
   },
 });

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useUser } from "@clerk/nextjs";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
@@ -20,18 +19,18 @@ import {
   Ban,
 } from "lucide-react";
 import Link from "next/link";
+import { useAdminContext } from "../AdminContext";
 
 type FilterType = "all" | "pending" | "resolved";
 
 export default function AdminReports() {
-  const { user } = useUser();
+  const { adminId } = useAdminContext();
   const [filter, setFilter] = useState<FilterType>("pending");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedReport, setSelectedReport] = useState<string | null>(null);
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
 
-  const currentUser = useQuery(api.users.getCurrentUser, { clerkId: user?.id });
-  const reports = useQuery(api.admin.getAllReports);
+  const reports = useQuery(api.admin.getAllReports, {});
 
   const resolveReport = useMutation(api.admin.resolveReport);
   const removeListing = useMutation(api.admin.removeListing);
@@ -55,35 +54,44 @@ export default function AdminReports() {
   const selected = reports?.find((r) => r._id === selectedReport);
 
   const handleResolve = async (action: string) => {
-    if (!currentUser || !selectedReport) return;
-    await resolveReport({
-      reportId: selectedReport as Id<"reports">,
-      adminId: currentUser._id,
-      action,
-    });
-    setSelectedReport(null);
+    if (!selectedReport) return;
+    try {
+      await resolveReport({
+        reportId: selectedReport as Id<"reports">,
+        action,
+      });
+      setSelectedReport(null);
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Failed to resolve report");
+    }
   };
 
   const handleRemoveListing = async () => {
-    if (!currentUser || !selected?.listing) return;
-    await removeListing({
-      listingId: selected.listing._id,
-      adminId: currentUser._id,
-      reason: `Removed due to report: ${selected.reason}`,
-    });
-    await handleResolve("listing_removed");
+    if (!selected?.listing) return;
+    try {
+      await removeListing({
+        listingId: selected.listing._id,
+        reason: `Removed due to report: ${selected.reason}`,
+      });
+      await handleResolve("listing_removed");
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Failed to remove listing");
+    }
   };
 
   const handleBanUser = async () => {
-    if (!currentUser || !selected?.listing) return;
+    if (!selected?.listing) return;
     const reason = prompt("Reason for ban:");
     if (!reason) return;
-    await banUser({
-      userId: selected.listing.sellerId,
-      adminId: currentUser._id,
-      reason,
-    });
-    await handleResolve("user_banned");
+    try {
+      await banUser({
+        userId: selected.listing.sellerId,
+        reason,
+      });
+      await handleResolve("user_banned");
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Failed to ban user");
+    }
   };
 
   const filterOptions: { value: FilterType; label: string; count?: number }[] = [

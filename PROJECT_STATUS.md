@@ -383,6 +383,17 @@ Admin dashboard: http://localhost:3000/admin
 
 ---
 
+## Recent Security Updates (Feb 2026)
+
+**Critical Security Fixes:**
+- Fixed admin authentication bypass (now uses server-side verification instead of client-supplied IDs)
+- Added file deletion ownership verification
+- Fixed settings mutations to use authenticated user context
+- Added error handling to all admin operations
+- Limited database queries to prevent performance issues
+
+---
+
 ## Known Issues
 
 1. Set Meeting button is placeholder UI

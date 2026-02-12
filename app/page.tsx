@@ -49,7 +49,8 @@ function HomeContent() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const listings = useQuery(api.listings.getAll);
+  const listingsData = useQuery(api.listings.getAll, {});
+  const listings = listingsData?.page;
 
   const filteredListings = listings
     ?.filter((listing) => {

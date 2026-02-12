@@ -28,6 +28,10 @@ const campuses = [
   "Waterfront Campus",
 ];
 
+const MAX_FILE_SIZE = 5 * 1024 * 1024;
+const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+const MAX_IMAGES = 10;
+
 const campusMapUrls: Record<string, string> = {
   "St. James Campus": "https://maps.google.com/maps?q=George+Brown+College+St+James+Campus,Toronto&z=15&output=embed",
   "Casa Loma Campus": "https://maps.google.com/maps?q=George+Brown+College+Casa+Loma+Campus,Toronto&z=15&output=embed",
@@ -117,14 +121,35 @@ function SellContent() {
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    if (files.length + imageFiles.length > 10) {
-      alert("Maximum 10 images allowed");
+
+    if (files.length + imageFiles.length > MAX_IMAGES) {
+      alert(`Maximum ${MAX_IMAGES} images allowed`);
       return;
     }
 
-    setImageFiles((prev) => [...prev, ...files]);
+    const validFiles: File[] = [];
+    for (const file of files) {
+      if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+        alert(`"${file.name}" is not a valid image type. Only JPEG, PNG, and WebP are allowed.`);
+        continue;
+      }
+      if (file.size > MAX_FILE_SIZE) {
+        const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
+        alert(`"${file.name}" is too large (${sizeMB}MB). Maximum size is 5MB.`);
+        continue;
+      }
+      if (file.size === 0) {
+        alert(`"${file.name}" is empty.`);
+        continue;
+      }
+      validFiles.push(file);
+    }
 
-    files.forEach((file) => {
+    if (validFiles.length === 0) return;
+
+    setImageFiles((prev) => [...prev, ...validFiles]);
+
+    validFiles.forEach((file) => {
       const reader = new FileReader();
       reader.onload = (e) => {
         setImagePreviews((prev) => [...prev, e.target?.result as string]);
@@ -140,17 +165,36 @@ function SellContent() {
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
-    const files = Array.from(e.dataTransfer.files).filter((f) =>
-      f.type.startsWith("image/")
-    );
-    if (files.length + imageFiles.length > 10) {
-      alert("Maximum 10 images allowed");
+    const files = Array.from(e.dataTransfer.files);
+
+    if (files.length + imageFiles.length > MAX_IMAGES) {
+      alert(`Maximum ${MAX_IMAGES} images allowed`);
       return;
     }
 
-    setImageFiles((prev) => [...prev, ...files]);
+    const validFiles: File[] = [];
+    for (const file of files) {
+      if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+        alert(`"${file.name}" is not a valid image type. Only JPEG, PNG, and WebP are allowed.`);
+        continue;
+      }
+      if (file.size > MAX_FILE_SIZE) {
+        const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
+        alert(`"${file.name}" is too large (${sizeMB}MB). Maximum size is 5MB.`);
+        continue;
+      }
+      if (file.size === 0) {
+        alert(`"${file.name}" is empty.`);
+        continue;
+      }
+      validFiles.push(file);
+    }
 
-    files.forEach((file) => {
+    if (validFiles.length === 0) return;
+
+    setImageFiles((prev) => [...prev, ...validFiles]);
+
+    validFiles.forEach((file) => {
       const reader = new FileReader();
       reader.onload = (e) => {
         setImagePreviews((prev) => [...prev, e.target?.result as string]);
@@ -204,6 +248,23 @@ function SellContent() {
       newErrors.images = "At least one image is required";
     }
 
+    for (let i = 0; i < imageFiles.length; i++) {
+      const file = imageFiles[i];
+      if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+        newErrors.images = `Invalid file type for "${file.name}". Only JPEG, PNG, and WebP images are allowed.`;
+        break;
+      }
+      if (file.size > MAX_FILE_SIZE) {
+        const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
+        newErrors.images = `File "${file.name}" is too large (${sizeMB}MB). Maximum size is 5MB.`;
+        break;
+      }
+      if (file.size === 0) {
+        newErrors.images = `File "${file.name}" is empty.`;
+        break;
+      }
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -215,18 +276,18 @@ function SellContent() {
 
     setIsSubmitting(true);
     try {
-      const storageIds: string[] = [];
-
-      for (const file of imageFiles) {
-        const uploadUrl = await generateUploadUrl();
+      const uploadPromises = imageFiles.map(async (file) => {
+        const uploadUrl = await generateUploadUrl({ userId: currentUser._id });
         const result = await fetch(uploadUrl, {
           method: "POST",
           headers: { "Content-Type": file.type },
           body: file,
         });
         const { storageId } = await result.json();
-        storageIds.push(storageId);
-      }
+        return storageId;
+      });
+
+      const storageIds = await Promise.all(uploadPromises);
 
       await createListing({
         sellerId: currentUser._id,
@@ -397,7 +458,7 @@ function SellContent() {
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept="image/*"
+                  accept="image/jpeg,image/png,image/webp"
                   multiple
                   onChange={handleImageSelect}
                   className="hidden"

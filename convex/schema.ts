@@ -98,4 +98,13 @@ export default defineSchema({
     .index("by_user", ["userId"])
     .index("by_listing", ["listingId"])
     .index("by_user_and_listing", ["userId", "listingId"]),
+
+  rateLimits: defineTable({
+    key: v.string(),
+    count: v.number(),
+    windowStart: v.number(),
+    expiresAt: v.number(),
+  })
+    .index("by_key", ["key"])
+    .index("by_expires", ["expiresAt"]),
 });

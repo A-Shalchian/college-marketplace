@@ -116,12 +116,14 @@ function ProfileContent() {
   };
 
   const handleDelete = async (listingId: Id<"listings">) => {
+    if (!currentUser) return;
     if (confirm("Are you sure you want to delete this listing?")) {
       await deleteListing({ listingId });
     }
   };
 
   const handleMarkAsSold = async (listingId: Id<"listings">) => {
+    if (!currentUser) return;
     await updateStatus({ listingId, status: "sold" });
   };
 

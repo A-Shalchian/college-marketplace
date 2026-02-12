@@ -1,8 +1,13 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { Id } from "./_generated/dataModel";
+import {
+  requireActiveUser,
+  requireConversationParticipant,
+  checkRateLimit,
+  validateMessageContent,
+} from "./security";
 
-// Check if a conversation exists (without creating one)
 export const getExistingConversation = query({
   args: {
     listingId: v.id("listings"),
@@ -19,7 +24,6 @@ export const getExistingConversation = query({
   },
 });
 
-// Only used when there's already a conversation with messages
 export const getOrCreateConversation = mutation({
   args: {
     listingId: v.id("listings"),
@@ -27,6 +31,23 @@ export const getOrCreateConversation = mutation({
     sellerId: v.id("users"),
   },
   handler: async (ctx, args) => {
+    await requireActiveUser(ctx, args.buyerId);
+
+    await checkRateLimit(ctx, args.buyerId, "createConversation");
+
+    if (args.buyerId === args.sellerId) {
+      throw new Error("You cannot start a conversation with yourself");
+    }
+
+    const listing = await ctx.db.get(args.listingId);
+    if (!listing) {
+      throw new Error("Listing not found");
+    }
+
+    if (listing.sellerId !== args.sellerId) {
+      throw new Error("Invalid seller for this listing");
+    }
+
     const existing = await ctx.db
       .query("conversations")
       .withIndex("by_listing", (q) => q.eq("listingId", args.listingId))
@@ -59,6 +80,12 @@ export const sendMessage = mutation({
     content: v.string(),
   },
   handler: async (ctx, args) => {
+    await requireActiveUser(ctx, args.senderId);
+
+    await checkRateLimit(ctx, args.senderId, "sendMessage");
+
+    const content = validateMessageContent(args.content);
+
     let conversationId = args.conversationId;
 
     // If no conversationId, create the conversation now (on first message)
@@ -67,7 +94,25 @@ export const sendMessage = mutation({
         throw new Error("listingId, buyerId, and sellerId are required when creating a new conversation");
       }
 
-      // Check if conversation already exists
+      if (args.senderId !== args.buyerId && args.senderId !== args.sellerId) {
+        throw new Error("Unauthorized: You must be the buyer or seller to send a message");
+      }
+
+      if (args.buyerId === args.sellerId) {
+        throw new Error("You cannot start a conversation with yourself");
+      }
+
+      const listing = await ctx.db.get(args.listingId);
+      if (!listing) {
+        throw new Error("Listing not found");
+      }
+
+      if (listing.sellerId !== args.sellerId) {
+        throw new Error("Invalid seller for this listing");
+      }
+
+      await checkRateLimit(ctx, args.senderId, "createConversation");
+
       const existing = await ctx.db
         .query("conversations")
         .withIndex("by_listing", (q) => q.eq("listingId", args.listingId!))
@@ -84,12 +129,14 @@ export const sendMessage = mutation({
           lastMessageAt: Date.now(),
         });
       }
+    } else {
+      await requireConversationParticipant(ctx, conversationId, args.senderId);
     }
 
     const messageId = await ctx.db.insert("messages", {
       conversationId,
       senderId: args.senderId,
-      content: args.content,
+      content,
       createdAt: Date.now(),
     });
 
@@ -102,8 +149,13 @@ export const sendMessage = mutation({
 });
 
 export const getMessages = query({
-  args: { conversationId: v.id("conversations") },
+  args: {
+    conversationId: v.id("conversations"),
+    userId: v.id("users"),
+  },
   handler: async (ctx, args) => {
+    await requireConversationParticipant(ctx, args.conversationId, args.userId);
+
     const messages = await ctx.db
       .query("messages")
       .withIndex("by_conversation", (q) =>
@@ -174,10 +226,16 @@ export const getUserConversations = query({
 });
 
 export const getConversationById = query({
-  args: { conversationId: v.id("conversations") },
+  args: {
+    conversationId: v.id("conversations"),
+    userId: v.id("users"),
+  },
   handler: async (ctx, args) => {
-    const conversation = await ctx.db.get(args.conversationId);
-    if (!conversation) return null;
+    const conversation = await requireConversationParticipant(
+      ctx,
+      args.conversationId,
+      args.userId
+    );
 
     const listing = await ctx.db.get(conversation.listingId);
     const buyer = await ctx.db.get(conversation.buyerId);
@@ -193,11 +251,18 @@ export const getConversationById = query({
       ).then((urls) => urls.filter(Boolean) as string[]);
     }
 
+    const sanitizeUser = (user: typeof buyer | typeof seller) => {
+      if (!user) return null;
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { clerkId: _clerkId, email: _email, banReason: _banReason, ...safeUser } = user;
+      return safeUser;
+    };
+
     return {
       ...conversation,
       listing: listing ? { ...listing, imageUrls } : null,
-      buyer,
-      seller,
+      buyer: sanitizeUser(buyer),
+      seller: sanitizeUser(seller),
     };
   },
 });

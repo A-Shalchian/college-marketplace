@@ -18,6 +18,7 @@ import {
   Settings,
 } from "lucide-react";
 import { useState } from "react";
+import { AdminProvider } from "./AdminContext";
 
 const navItems = [
   { href: "/admin", label: "Overview", icon: LayoutDashboard },
@@ -140,7 +141,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </aside>
 
       <main className="md:ml-64 min-h-screen">
-        <div className="p-4 md:p-8">{children}</div>
+        <div className="p-4 md:p-8">
+          <AdminProvider>{children}</AdminProvider>
+        </div>
       </main>
     </div>
   );
