@@ -22,7 +22,7 @@ import { useAdminContext } from "../AdminContext";
 type FilterType = "all" | "active" | "flagged" | "rejected" | "removed";
 
 export default function AdminListings() {
-  const { adminId } = useAdminContext();
+  const { clerkId } = useAdminContext();
   const searchParams = useSearchParams();
   const initialFilter = (searchParams.get("filter") as FilterType) || "all";
 
@@ -35,7 +35,7 @@ export default function AdminListings() {
   const [rejectReason, setRejectReason] = useState("");
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
 
-  const listings = useQuery(api.admin.getAllListings, {});
+  const listings = useQuery(api.admin.getAllListings, clerkId ? { clerkId } : "skip");
 
   const approveListing = useMutation(api.admin.approveListing);
   const rejectListing = useMutation(api.admin.rejectListing);
@@ -61,17 +61,19 @@ export default function AdminListings() {
   const selected = listings?.find((l) => l._id === selectedListing);
 
   const handleApprove = async (listingId: Id<"listings">) => {
+    if (!clerkId) return;
     try {
-      await approveListing({ listingId });
+      await approveListing({ clerkId, listingId });
     } catch (error) {
       alert(error instanceof Error ? error.message : "Failed to approve listing");
     }
   };
 
   const handleReject = async () => {
-    if (!selectedListing) return;
+    if (!selectedListing || !clerkId) return;
     try {
       await rejectListing({
+        clerkId,
         listingId: selectedListing as Id<"listings">,
         reason: rejectReason,
       });
@@ -84,8 +86,9 @@ export default function AdminListings() {
   };
 
   const handleRemove = async (listingId: Id<"listings">, reason: string) => {
+    if (!clerkId) return;
     try {
-      await removeListing({ listingId, reason });
+      await removeListing({ clerkId, listingId, reason });
     } catch (error) {
       alert(error instanceof Error ? error.message : "Failed to remove listing");
     }

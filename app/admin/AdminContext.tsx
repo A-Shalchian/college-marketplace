@@ -8,23 +8,27 @@ import { Id } from "@/convex/_generated/dataModel";
 
 interface AdminContextType {
   adminId: Id<"users"> | null;
+  clerkId: string | null;
   isLoading: boolean;
 }
 
 const AdminContext = createContext<AdminContextType>({
   adminId: null,
+  clerkId: null,
   isLoading: true,
 });
 
 export function AdminProvider({ children }: { children: ReactNode }) {
-  const { user } = useUser();
-  const currentUser = useQuery(api.users.getCurrentUser, {
-    clerkId: user?.id,
-  });
+  const { user, isLoaded } = useUser();
+  const currentUser = useQuery(
+    api.users.getCurrentUser,
+    user?.id ? { clerkId: user.id } : "skip"
+  );
 
   const value: AdminContextType = {
     adminId: currentUser?._id ?? null,
-    isLoading: currentUser === undefined,
+    clerkId: user?.id ?? null,
+    isLoading: !isLoaded || currentUser === undefined,
   };
 
   return (

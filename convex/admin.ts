@@ -13,7 +13,7 @@ import {
   sanitizeInput,
   requireHigherRole,
   getRoleLevel,
-  getAuthenticatedUser,
+  getUserByClerkId,
 } from "./security";
 
 export const isAdmin = query({
@@ -32,9 +32,10 @@ export const isAdmin = query({
 });
 
 export const getStats = query({
-  args: {},
-  handler: async (ctx) => {
-    const admin = await getAuthenticatedUser(ctx);
+  args: { clerkId: v.optional(v.string()) },
+  handler: async (ctx, args) => {
+    if (!args.clerkId) return null;
+    const admin = await getUserByClerkId(ctx, args.clerkId);
     await requireAdmin(ctx, admin._id);
 
     const users = await ctx.db.query("users").collect();
@@ -62,9 +63,10 @@ export const getStats = query({
 });
 
 export const getAllUsers = query({
-  args: {},
-  handler: async (ctx) => {
-    const admin = await getAuthenticatedUser(ctx);
+  args: { clerkId: v.optional(v.string()) },
+  handler: async (ctx, args) => {
+    if (!args.clerkId) return null;
+    const admin = await getUserByClerkId(ctx, args.clerkId);
     await requireAdmin(ctx, admin._id);
 
     const users = await ctx.db.query("users").order("desc").take(200);
@@ -86,9 +88,10 @@ export const getAllUsers = query({
 });
 
 export const getAllListings = query({
-  args: {},
-  handler: async (ctx) => {
-    const admin = await getAuthenticatedUser(ctx);
+  args: { clerkId: v.optional(v.string()) },
+  handler: async (ctx, args) => {
+    if (!args.clerkId) return null;
+    const admin = await getUserByClerkId(ctx, args.clerkId);
     await requireAdmin(ctx, admin._id);
 
     const listings = await ctx.db.query("listings").order("desc").take(500);
@@ -109,9 +112,10 @@ export const getAllListings = query({
 });
 
 export const getFlaggedListings = query({
-  args: {},
-  handler: async (ctx) => {
-    const admin = await getAuthenticatedUser(ctx);
+  args: { clerkId: v.optional(v.string()) },
+  handler: async (ctx, args) => {
+    if (!args.clerkId) return null;
+    const admin = await getUserByClerkId(ctx, args.clerkId);
     await requireAdmin(ctx, admin._id);
 
     const listings = await ctx.db
@@ -136,9 +140,10 @@ export const getFlaggedListings = query({
 });
 
 export const getAllReports = query({
-  args: {},
-  handler: async (ctx) => {
-    const admin = await getAuthenticatedUser(ctx);
+  args: { clerkId: v.optional(v.string()) },
+  handler: async (ctx, args) => {
+    if (!args.clerkId) return null;
+    const admin = await getUserByClerkId(ctx, args.clerkId);
     await requireAdmin(ctx, admin._id);
 
     const reports = await ctx.db.query("reports").order("desc").take(200);
@@ -157,9 +162,10 @@ export const getAllReports = query({
 });
 
 export const getRecentActivity = query({
-  args: {},
-  handler: async (ctx) => {
-    const admin = await getAuthenticatedUser(ctx);
+  args: { clerkId: v.optional(v.string()) },
+  handler: async (ctx, args) => {
+    if (!args.clerkId) return null;
+    const admin = await getUserByClerkId(ctx, args.clerkId);
     await requireAdmin(ctx, admin._id);
 
     const logs = await ctx.db
@@ -179,10 +185,11 @@ export const getRecentActivity = query({
 
 export const approveListing = mutation({
   args: {
+    clerkId: v.string(),
     listingId: v.id("listings"),
   },
   handler: async (ctx, args) => {
-    const admin = await getAuthenticatedUser(ctx);
+    const admin = await getUserByClerkId(ctx, args.clerkId);
     await requireAdmin(ctx, admin._id);
 
     await checkRateLimit(ctx, admin._id, "adminAction");
@@ -211,11 +218,12 @@ export const approveListing = mutation({
 
 export const rejectListing = mutation({
   args: {
+    clerkId: v.string(),
     listingId: v.id("listings"),
     reason: v.string(),
   },
   handler: async (ctx, args) => {
-    const admin = await getAuthenticatedUser(ctx);
+    const admin = await getUserByClerkId(ctx, args.clerkId);
     await requireAdmin(ctx, admin._id);
 
     await checkRateLimit(ctx, admin._id, "adminAction");
@@ -251,11 +259,12 @@ export const rejectListing = mutation({
 
 export const removeListing = mutation({
   args: {
+    clerkId: v.string(),
     listingId: v.id("listings"),
     reason: v.string(),
   },
   handler: async (ctx, args) => {
-    const admin = await getAuthenticatedUser(ctx);
+    const admin = await getUserByClerkId(ctx, args.clerkId);
     await requireAdmin(ctx, admin._id);
 
     await checkRateLimit(ctx, admin._id, "adminAction");
@@ -290,11 +299,12 @@ export const removeListing = mutation({
 
 export const banUser = mutation({
   args: {
+    clerkId: v.string(),
     userId: v.id("users"),
     reason: v.string(),
   },
   handler: async (ctx, args) => {
-    const admin = await getAuthenticatedUser(ctx);
+    const admin = await getUserByClerkId(ctx, args.clerkId);
     await requireAdmin(ctx, admin._id);
 
     await checkRateLimit(ctx, admin._id, "adminAction");
@@ -338,10 +348,11 @@ export const banUser = mutation({
 
 export const unbanUser = mutation({
   args: {
+    clerkId: v.string(),
     userId: v.id("users"),
   },
   handler: async (ctx, args) => {
-    const admin = await getAuthenticatedUser(ctx);
+    const admin = await getUserByClerkId(ctx, args.clerkId);
     await requireAdmin(ctx, admin._id);
     await checkRateLimit(ctx, admin._id, "adminAction");
 
@@ -368,11 +379,12 @@ export const unbanUser = mutation({
 
 export const warnUser = mutation({
   args: {
+    clerkId: v.string(),
     userId: v.id("users"),
     reason: v.string(),
   },
   handler: async (ctx, args) => {
-    const admin = await getAuthenticatedUser(ctx);
+    const admin = await getUserByClerkId(ctx, args.clerkId);
     await requireAdmin(ctx, admin._id);
     await checkRateLimit(ctx, admin._id, "adminAction");
 
@@ -401,11 +413,12 @@ export const warnUser = mutation({
 
 export const setUserRole = mutation({
   args: {
+    clerkId: v.string(),
     userId: v.id("users"),
     role: v.string(),
   },
   handler: async (ctx, args) => {
-    const admin = await getAuthenticatedUser(ctx);
+    const admin = await getUserByClerkId(ctx, args.clerkId);
     await requireSuperAdmin(ctx, admin._id);
     await checkRateLimit(ctx, admin._id, "adminAction");
 
@@ -445,11 +458,12 @@ export const setUserRole = mutation({
 
 export const resolveReport = mutation({
   args: {
+    clerkId: v.string(),
     reportId: v.id("reports"),
     action: v.string(),
   },
   handler: async (ctx, args) => {
-    const admin = await getAuthenticatedUser(ctx);
+    const admin = await getUserByClerkId(ctx, args.clerkId);
     await requireAdmin(ctx, admin._id);
     await checkRateLimit(ctx, admin._id, "adminAction");
 

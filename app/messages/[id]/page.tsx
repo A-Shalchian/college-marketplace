@@ -50,8 +50,9 @@ function ConversationContent({ id }: { id: string }) {
   const updateStatus = useMutation(api.listings.updateStatus);
 
   const handleMarkAsSold = async () => {
-    if (!conversation?.listing?._id || !currentUser) return;
+    if (!conversation?.listing?._id || !currentUser || !user?.id) return;
     await updateStatus({
+      clerkId: user.id,
       listingId: conversation.listing._id as Id<"listings">,
       status: "sold",
     });

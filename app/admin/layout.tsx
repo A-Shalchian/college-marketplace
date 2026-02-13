@@ -33,9 +33,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const isAdmin = useQuery(api.admin.isAdmin, {
-    clerkId: user?.id,
-  });
+  const isAdmin = useQuery(
+    api.admin.isAdmin,
+    user?.id ? { clerkId: user.id } : "skip"
+  );
 
   if (!isLoaded || isAdmin === undefined) {
     return (

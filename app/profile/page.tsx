@@ -116,15 +116,15 @@ function ProfileContent() {
   };
 
   const handleDelete = async (listingId: Id<"listings">) => {
-    if (!currentUser) return;
+    if (!currentUser || !user?.id) return;
     if (confirm("Are you sure you want to delete this listing?")) {
-      await deleteListing({ listingId });
+      await deleteListing({ clerkId: user.id, listingId });
     }
   };
 
   const handleMarkAsSold = async (listingId: Id<"listings">) => {
-    if (!currentUser) return;
-    await updateStatus({ listingId, status: "sold" });
+    if (!currentUser || !user?.id) return;
+    await updateStatus({ clerkId: user.id, listingId, status: "sold" });
   };
 
   if (!user) {

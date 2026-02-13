@@ -7,7 +7,7 @@ import {
   validateEnum,
   VALIDATION,
   sanitizeInput,
-  getAuthenticatedUser,
+  getUserByClerkId,
 } from "./security";
 
 const ALLOWED_SETTINGS_KEYS = [
@@ -44,11 +44,12 @@ export const get = query({
 
 export const set = mutation({
   args: {
+    clerkId: v.string(),
     key: v.string(),
     value: v.string(),
   },
   handler: async (ctx, args) => {
-    const admin = await getAuthenticatedUser(ctx);
+    const admin = await getUserByClerkId(ctx, args.clerkId);
     await requireAdmin(ctx, admin._id);
 
     await checkRateLimit(ctx, admin._id, "updateSettings");
@@ -135,11 +136,12 @@ type BlocklistCategory = typeof ALLOWED_BLOCKLIST_CATEGORIES[number];
 
 export const updateBlocklist = mutation({
   args: {
+    clerkId: v.string(),
     category: v.string(),
     keywords: v.array(v.string()),
   },
   handler: async (ctx, args) => {
-    const admin = await getAuthenticatedUser(ctx);
+    const admin = await getUserByClerkId(ctx, args.clerkId);
     await requireAdmin(ctx, admin._id);
 
     await checkRateLimit(ctx, admin._id, "updateSettings");
@@ -196,9 +198,9 @@ export const updateBlocklist = mutation({
 });
 
 export const initializeBlocklist = mutation({
-  args: {},
-  handler: async (ctx) => {
-    const admin = await getAuthenticatedUser(ctx);
+  args: { clerkId: v.string() },
+  handler: async (ctx, args) => {
+    const admin = await getUserByClerkId(ctx, args.clerkId);
     await requireAdmin(ctx, admin._id);
 
     const existing = await ctx.db

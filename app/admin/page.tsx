@@ -18,11 +18,11 @@ import Link from "next/link";
 import { useAdminContext } from "./AdminContext";
 
 export default function AdminDashboard() {
-  const { adminId, isLoading: adminLoading } = useAdminContext();
+  const { clerkId } = useAdminContext();
 
-  const stats = useQuery(api.admin.getStats, {});
-  const recentActivity = useQuery(api.admin.getRecentActivity, {});
-  const flaggedListings = useQuery(api.admin.getFlaggedListings, {});
+  const stats = useQuery(api.admin.getStats, clerkId ? { clerkId } : "skip");
+  const recentActivity = useQuery(api.admin.getRecentActivity, clerkId ? { clerkId } : "skip");
+  const flaggedListings = useQuery(api.admin.getFlaggedListings, clerkId ? { clerkId } : "skip");
 
   if (!stats) {
     return (

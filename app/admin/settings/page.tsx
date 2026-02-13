@@ -27,7 +27,7 @@ const categories = [
 ];
 
 export default function AdminSettings() {
-  const { adminId } = useAdminContext();
+  const { clerkId } = useAdminContext();
   const blocklist = useQuery(api.settings.getBlocklist);
   const initializeBlocklist = useMutation(api.settings.initializeBlocklist);
   const updateBlocklist = useMutation(api.settings.updateBlocklist);
@@ -45,8 +45,9 @@ export default function AdminSettings() {
   }, [blocklist]);
 
   const handleInitialize = async () => {
+    if (!clerkId) return;
     try {
-      await initializeBlocklist({});
+      await initializeBlocklist({ clerkId });
     } catch (error) {
       alert(error instanceof Error ? error.message : "Failed to initialize blocklist");
     }
@@ -73,9 +74,11 @@ export default function AdminSettings() {
   };
 
   const handleSave = async () => {
+    if (!clerkId) return;
     setSaving(true);
     try {
       await updateBlocklist({
+        clerkId,
         category: activeCategory,
         keywords: keywords[activeCategory] || [],
       });

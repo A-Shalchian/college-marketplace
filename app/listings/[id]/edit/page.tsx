@@ -245,6 +245,7 @@ function EditListingContent({ id }: { id: string }) {
       const newStorageIds = await Promise.all(uploadPromises);
 
       await updateListing({
+        clerkId: user!.id,
         listingId: listing._id,
         title,
         description,
@@ -265,12 +266,12 @@ function EditListingContent({ id }: { id: string }) {
   };
 
   const handleDelete = async () => {
-    if (!listing || !currentUser) return;
+    if (!listing || !currentUser || !user?.id) return;
     if (!confirm("Are you sure you want to delete this listing? This cannot be undone.")) return;
 
     setIsDeleting(true);
     try {
-      await deleteListing({ listingId: listing._id });
+      await deleteListing({ clerkId: user.id, listingId: listing._id });
       router.push("/profile");
     } catch (error) {
       console.error("Failed to delete listing:", error);

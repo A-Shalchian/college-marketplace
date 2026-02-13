@@ -192,6 +192,27 @@ export async function getAuthenticatedUser(
   return user;
 }
 
+// Look up user by clerkId (for when ctx.auth isn't configured)
+export async function getUserByClerkId(
+  ctx: QueryCtx | MutationCtx,
+  clerkId: string
+): Promise<Doc<"users">> {
+  const user = await ctx.db
+    .query("users")
+    .withIndex("by_clerk_id", (q) => q.eq("clerkId", clerkId))
+    .unique();
+
+  if (!user) {
+    throw new Error("User not found. Please refresh the page.");
+  }
+
+  if (user.isBanned) {
+    throw new Error("Your account has been suspended. Reason: " + (user.banReason || "Policy violation"));
+  }
+
+  return user;
+}
+
 const ROLE_HIERARCHY = {
   super_admin: 3,
   admin: 2,
