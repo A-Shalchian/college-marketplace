@@ -23,6 +23,10 @@ export function Navbar() {
   const { isAuthenticated, isLoading } = useConvexAuth();
   const { signOut } = useAuthActions();
   const currentUser = useQuery(api.users.getCurrentUser);
+  const unreadCount = useQuery(
+    api.messages.getUnreadCount,
+    currentUser ? { userId: currentUser._id } : "skip"
+  );
   const router = useRouter();
   const searchParams = useSearchParams();
   const [searchQuery, setSearchQuery] = useState(
@@ -109,9 +113,14 @@ export function Navbar() {
                 </Link>
                 <Link
                   href="/messages"
-                  className="text-sm font-semibold hover:text-primary transition-colors"
+                  className="text-sm font-semibold hover:text-primary transition-colors relative"
                 >
                   Messages
+                  {unreadCount !== undefined && unreadCount > 0 && (
+                    <span className="absolute -top-2 -right-4 min-w-[18px] h-[18px] flex items-center justify-center bg-accent-coral text-white text-[10px] font-bold rounded-full px-1">
+                      {unreadCount > 9 ? "9+" : unreadCount}
+                    </span>
+                  )}
                 </Link>
               </nav>
               <div className="h-8 w-[1px] bg-gray-200 dark:bg-border hidden lg:block" />
@@ -245,6 +254,11 @@ export function Navbar() {
                   >
                     <MessageCircle className="w-5 h-5" />
                     <span className="font-medium">Messages</span>
+                    {unreadCount !== undefined && unreadCount > 0 && (
+                      <span className="min-w-[18px] h-[18px] flex items-center justify-center bg-accent-coral text-white text-[10px] font-bold rounded-full px-1">
+                        {unreadCount > 9 ? "9+" : unreadCount}
+                      </span>
+                    )}
                   </Link>
                   <Link
                     href="/profile"

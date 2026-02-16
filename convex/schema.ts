@@ -54,6 +54,8 @@ export default defineSchema({
     buyerId: v.id("users"),
     sellerId: v.id("users"),
     lastMessageAt: v.number(),
+    buyerLastReadAt: v.optional(v.number()),
+    sellerLastReadAt: v.optional(v.number()),
   })
     .index("by_buyer", ["buyerId"])
     .index("by_seller", ["sellerId"])

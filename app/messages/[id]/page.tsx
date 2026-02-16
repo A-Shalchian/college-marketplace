@@ -44,6 +44,7 @@ function ConversationContent({ id }: { id: string }) {
     currentUser ? { userId: currentUser._id } : "skip"
   );
   const sendMessage = useMutation(api.messages.sendMessage);
+  const markAsRead = useMutation(api.messages.markAsRead);
   const updateStatus = useMutation(api.listings.updateStatus);
 
   const handleMarkAsSold = async () => {
@@ -57,6 +58,15 @@ function ConversationContent({ id }: { id: string }) {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  useEffect(() => {
+    if (currentUser && conversation) {
+      markAsRead({
+        conversationId: id as Id<"conversations">,
+        userId: currentUser._id,
+      });
+    }
+  }, [currentUser, conversation, messages?.length]);
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -205,18 +215,23 @@ function ConversationContent({ id }: { id: string }) {
                   </div>
                   <div className="flex-1 overflow-hidden">
                     <div className="flex items-center justify-between">
-                      <p className="text-sm font-bold truncate">
+                      <p className={`text-sm truncate ${conv.hasUnread ? "font-extrabold" : "font-bold"}`}>
                         {conv.otherUser?.name}
                       </p>
-                      <span className="text-[10px] text-gray-400 font-medium">
-                        {formatTime(conv.lastMessageAt)}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        {conv.hasUnread && !isActive && (
+                          <div className="w-2.5 h-2.5 rounded-full bg-accent-coral shrink-0" />
+                        )}
+                        <span className="text-[10px] text-gray-400 font-medium">
+                          {formatTime(conv.lastMessageAt)}
+                        </span>
+                      </div>
                     </div>
                     <p className={`text-xs font-semibold truncate mb-1 ${isActive ? "text-primary" : "text-gray-500"}`}>
                       {conv.listing?.title}
                     </p>
                     {conv.lastMessage && (
-                      <p className="text-xs text-gray-500 truncate">
+                      <p className={`text-xs truncate ${conv.hasUnread && !isActive ? "text-foreground font-semibold" : "text-gray-500"}`}>
                         {conv.lastMessage.content}
                       </p>
                     )}

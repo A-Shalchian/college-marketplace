@@ -145,18 +145,23 @@ function MessagesContent() {
                   </div>
                   <div className="flex-1 overflow-hidden">
                     <div className="flex items-center justify-between">
-                      <p className="text-sm font-bold truncate">
+                      <p className={`text-sm truncate ${conv.hasUnread ? "font-extrabold" : "font-bold"}`}>
                         {conv.otherUser?.name}
                       </p>
-                      <span className="text-[10px] text-gray-400 font-medium">
-                        {formatTime(conv.lastMessageAt)}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        {conv.hasUnread && (
+                          <div className="w-2.5 h-2.5 rounded-full bg-accent-coral shrink-0" />
+                        )}
+                        <span className="text-[10px] text-gray-400 font-medium">
+                          {formatTime(conv.lastMessageAt)}
+                        </span>
+                      </div>
                     </div>
                     <p className="text-xs text-primary font-semibold truncate mb-1">
                       {conv.listing?.title}
                     </p>
                     {conv.lastMessage && (
-                      <p className="text-xs text-gray-500 truncate">
+                      <p className={`text-xs truncate ${conv.hasUnread ? "text-foreground font-semibold" : "text-gray-500"}`}>
                         {conv.lastMessage.content}
                       </p>
                     )}

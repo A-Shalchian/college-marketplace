@@ -205,11 +205,19 @@ export const getUserConversations = query({
           .order("desc")
           .first();
 
+        const isBuyer = conv.buyerId === args.userId;
+        const lastReadAt = isBuyer ? conv.buyerLastReadAt : conv.sellerLastReadAt;
+        const hasUnread =
+          lastMessage !== null &&
+          lastMessage.senderId !== args.userId &&
+          (!lastReadAt || lastMessage.createdAt > lastReadAt);
+
         return {
           ...conv,
           listing,
           otherUser,
           lastMessage,
+          hasUnread,
         };
       })
     );
@@ -222,6 +230,65 @@ export const getUserConversations = query({
     return conversationsWithMessages.sort(
       (a, b) => b.lastMessageAt - a.lastMessageAt
     );
+  },
+});
+
+export const markAsRead = mutation({
+  args: {
+    conversationId: v.id("conversations"),
+    userId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    const conversation = await requireConversationParticipant(
+      ctx,
+      args.conversationId,
+      args.userId
+    );
+
+    const isBuyer = conversation.buyerId === args.userId;
+    await ctx.db.patch(args.conversationId, {
+      ...(isBuyer
+        ? { buyerLastReadAt: Date.now() }
+        : { sellerLastReadAt: Date.now() }),
+    });
+  },
+});
+
+export const getUnreadCount = query({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    const asBuyer = await ctx.db
+      .query("conversations")
+      .withIndex("by_buyer", (q) => q.eq("buyerId", args.userId))
+      .collect();
+
+    const asSeller = await ctx.db
+      .query("conversations")
+      .withIndex("by_seller", (q) => q.eq("sellerId", args.userId))
+      .collect();
+
+    const allConversations = [...asBuyer, ...asSeller];
+
+    let count = 0;
+    for (const conv of allConversations) {
+      const lastMessage = await ctx.db
+        .query("messages")
+        .withIndex("by_conversation", (q) =>
+          q.eq("conversationId", conv._id)
+        )
+        .order("desc")
+        .first();
+
+      if (lastMessage && lastMessage.senderId !== args.userId) {
+        const isBuyer = conv.buyerId === args.userId;
+        const lastReadAt = isBuyer ? conv.buyerLastReadAt : conv.sellerLastReadAt;
+        if (!lastReadAt || lastMessage.createdAt > lastReadAt) {
+          count++;
+        }
+      }
+    }
+
+    return count;
   },
 });
 

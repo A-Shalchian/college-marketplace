@@ -12,7 +12,6 @@ import {
   Loader2,
   ShoppingBag,
   CheckCircle,
-  Star,
   Calendar,
   Settings,
   Trash2,
@@ -343,11 +342,11 @@ function ProfileContent() {
           </div>
           <div className="bg-white dark:bg-card p-4 md:p-6 rounded-xl subtle-float border border-gray-100 dark:border-border flex items-center gap-3 md:gap-5">
             <div className="w-10 h-10 md:w-14 md:h-14 rounded-xl bg-accent-coral/10 text-accent-coral flex items-center justify-center shrink-0">
-              <Star className="w-5 h-5 md:w-7 md:h-7" />
+              <Calendar className="w-5 h-5 md:w-7 md:h-7" />
             </div>
             <div>
-              <p className="text-xl md:text-2xl font-extrabold">5.0</p>
-              <p className="text-[10px] md:text-sm font-medium text-muted-foreground">Rating</p>
+              <p className="text-xl md:text-2xl font-extrabold">{joinDate}</p>
+              <p className="text-[10px] md:text-sm font-medium text-muted-foreground">Joined</p>
             </div>
           </div>
         </section>
