@@ -119,42 +119,7 @@ Enhance user profile experience with settings management, dark mode theming, and
 
 ---
 
-## Sprint 5 Backlog (AI Moderation)
-
-| Feature | Priority | Description |
-|---------|----------|-------------|
-| **OpenAI Moderation API** | High | Free API, catches context not just keywords |
-| **Layered Moderation** | High | Keyword filter → AI check → Admin review |
-| **Perspective API** | Medium | Google's toxicity detection for messages |
-| **Claude Review** | Low | Nuanced AI judgment for edge cases |
-
-### AI Moderation Implementation Plan
-
-```
-Layer 1: Keyword Filter (instant, free) - DONE
-    ↓ passes
-Layer 2: OpenAI Moderation API (free, catches context)
-    ↓ passes
-Layer 3: Active (no human review needed)
-
-If flagged at any layer → Admin review queue
-```
-
-**Requirements:**
-- OpenAI API key (free tier works)
-- Convex action to call external API
-- ~100ms added latency per listing
-
-**API Options:**
-| API | Cost | Speed | Best For |
-|-----|------|-------|----------|
-| OpenAI Moderation | Free | ~100ms | Sexual, violence, hate detection |
-| Perspective API | Free (1 QPS) | ~200ms | Toxicity in messages |
-| Claude Haiku | ~$0.0001/check | ~500ms | Nuanced context understanding |
-
----
-
-## Sprint 6+ Backlog (Future)
+## Sprint 5+ Backlog (Future)
 
 | Feature | Priority | Description |
 |---------|----------|-------------|

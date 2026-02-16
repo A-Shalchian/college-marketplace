@@ -9,10 +9,12 @@ import { ListingCard } from "@/components/listing-card";
 import { CategoryFilter, categories } from "@/components/category-filter";
 import { Footer } from "@/components/footer";
 import { MobileSearch } from "@/components/mobile-search";
-import { Loader2, X, ChevronRight, ChevronDown, Shield } from "lucide-react";
+import { Loader2, X, ChevronRight, ChevronDown, Shield, MapPin } from "lucide-react";
 import Link from "next/link";
 
 type SortOption = "newest" | "oldest" | "price_low" | "price_high";
+
+const campusOptions = ["All Campuses", "St. James Campus", "Casa Loma Campus", "Waterfront Campus"];
 
 function HomeContent() {
   const { isAuthenticated } = useConvexAuth();
@@ -27,8 +29,11 @@ function HomeContent() {
   const [showFilters, setShowFilters] = useState(false);
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
+  const [selectedCampus, setSelectedCampus] = useState("All Campuses");
+  const [showCampusMenu, setShowCampusMenu] = useState(false);
   const sortMenuRef = useRef<HTMLDivElement>(null);
   const filterMenuRef = useRef<HTMLDivElement>(null);
+  const campusMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -37,6 +42,9 @@ function HomeContent() {
       }
       if (filterMenuRef.current && !filterMenuRef.current.contains(event.target as Node)) {
         setShowFilters(false);
+      }
+      if (campusMenuRef.current && !campusMenuRef.current.contains(event.target as Node)) {
+        setShowCampusMenu(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -56,7 +64,8 @@ function HomeContent() {
         listing.description.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesMinPrice = !minPrice || listing.price >= parseFloat(minPrice);
       const matchesMaxPrice = !maxPrice || listing.price <= parseFloat(maxPrice);
-      return matchesCategory && matchesSearch && matchesMinPrice && matchesMaxPrice;
+      const matchesCampus = selectedCampus === "All Campuses" || listing.campus === selectedCampus;
+      return matchesCategory && matchesSearch && matchesMinPrice && matchesMaxPrice && matchesCampus;
     })
     ?.sort((a, b) => {
       switch (sortBy) {
@@ -83,9 +92,10 @@ function HomeContent() {
   const clearFilters = () => {
     setMinPrice("");
     setMaxPrice("");
+    setSelectedCampus("All Campuses");
   };
 
-  const hasActiveFilters = minPrice || maxPrice;
+  const hasActiveFilters = minPrice || maxPrice || selectedCampus !== "All Campuses";
 
   const handleCategorySelect = (categoryId: string) => {
     setSelectedCategory(categoryId);
@@ -143,16 +153,50 @@ function HomeContent() {
         <div className="flex items-center justify-between mb-6 md:mb-8">
           <h2 className="text-xl md:text-2xl font-bold">Latest on Campus</h2>
           <div className="flex items-center gap-2">
-            <div className="relative" ref={filterMenuRef}>
+            <div className="relative" ref={campusMenuRef}>
               <button
-                onClick={() => setShowFilters(!showFilters)}
+                onClick={() => setShowCampusMenu(!showCampusMenu)}
                 className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-sm font-semibold transition-colors ${
-                  hasActiveFilters
+                  selectedCampus !== "All Campuses"
                     ? "bg-primary text-white border-primary"
                     : "bg-white dark:bg-card border-gray-100 dark:border-border hover:bg-gray-50 dark:hover:bg-muted"
                 }`}
               >
-                {hasActiveFilters ? `$${minPrice || "0"} - $${maxPrice || "∞"}` : "Price"}
+                <MapPin className="w-4 h-4" />
+                {selectedCampus === "All Campuses" ? "Campus" : selectedCampus.replace(" Campus", "")}
+                <ChevronDown className={`w-4 h-4 transition-transform ${showCampusMenu ? "rotate-180" : ""}`} />
+              </button>
+              {showCampusMenu && (
+                <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-card rounded-xl shadow-lg border border-gray-100 dark:border-border z-50 overflow-hidden">
+                  {campusOptions.map((campus) => (
+                    <button
+                      key={campus}
+                      onClick={() => {
+                        setSelectedCampus(campus);
+                        setShowCampusMenu(false);
+                      }}
+                      className={`w-full text-left px-4 py-2.5 text-sm font-medium transition-colors ${
+                        selectedCampus === campus
+                          ? "bg-primary/10 text-primary"
+                          : "hover:bg-gray-50 dark:hover:bg-muted"
+                      }`}
+                    >
+                      {campus}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className="relative" ref={filterMenuRef}>
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-sm font-semibold transition-colors ${
+                  minPrice || maxPrice
+                    ? "bg-primary text-white border-primary"
+                    : "bg-white dark:bg-card border-gray-100 dark:border-border hover:bg-gray-50 dark:hover:bg-muted"
+                }`}
+              >
+                {minPrice || maxPrice ? `$${minPrice || "0"} - $${maxPrice || "∞"}` : "Price"}
                 <ChevronDown className={`w-4 h-4 transition-transform ${showFilters ? "rotate-180" : ""}`} />
               </button>
               {showFilters && (
