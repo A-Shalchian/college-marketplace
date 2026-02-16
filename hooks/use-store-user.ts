@@ -1,22 +1,6 @@
-"use client";
-
-import { useUser } from "@clerk/nextjs";
-import { useMutation } from "convex/react";
-import { api } from "@/convex/_generated/api";
-import { useEffect } from "react";
-
+// This hook is no longer needed. User creation is handled automatically
+// by Convex Auth during sign-up via the Password provider's profile() callback.
+// Kept as an empty export to avoid breaking any lingering imports.
 export function useStoreUser() {
-  const { user, isLoaded } = useUser();
-  const createOrGetUser = useMutation(api.users.createOrGetUser);
-
-  useEffect(() => {
-    if (!isLoaded || !user) return;
-
-    createOrGetUser({
-      clerkId: user.id,
-      email: user.emailAddresses[0]?.emailAddress ?? "",
-      name: user.fullName ?? user.firstName ?? "User",
-      imageUrl: user.imageUrl,
-    });
-  }, [user, isLoaded, createOrGetUser]);
+  // no-op
 }

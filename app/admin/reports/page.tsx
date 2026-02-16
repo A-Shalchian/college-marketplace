@@ -19,18 +19,16 @@ import {
   Ban,
 } from "lucide-react";
 import Link from "next/link";
-import { useAdminContext } from "../AdminContext";
 
 type FilterType = "all" | "pending" | "resolved";
 
 export default function AdminReports() {
-  const { clerkId } = useAdminContext();
   const [filter, setFilter] = useState<FilterType>("pending");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedReport, setSelectedReport] = useState<string | null>(null);
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
 
-  const reports = useQuery(api.admin.getAllReports, clerkId ? { clerkId } : "skip");
+  const reports = useQuery(api.admin.getAllReports);
 
   const resolveReport = useMutation(api.admin.resolveReport);
   const removeListing = useMutation(api.admin.removeListing);
@@ -54,10 +52,9 @@ export default function AdminReports() {
   const selected = reports?.find((r) => r._id === selectedReport);
 
   const handleResolve = async (action: string) => {
-    if (!selectedReport || !clerkId) return;
+    if (!selectedReport) return;
     try {
       await resolveReport({
-        clerkId,
         reportId: selectedReport as Id<"reports">,
         action,
       });
@@ -68,10 +65,9 @@ export default function AdminReports() {
   };
 
   const handleRemoveListing = async () => {
-    if (!selected?.listing || !clerkId) return;
+    if (!selected?.listing) return;
     try {
       await removeListing({
-        clerkId,
         listingId: selected.listing._id,
         reason: `Removed due to report: ${selected.reason}`,
       });
@@ -82,12 +78,11 @@ export default function AdminReports() {
   };
 
   const handleBanUser = async () => {
-    if (!selected?.listing || !clerkId) return;
+    if (!selected?.listing) return;
     const reason = prompt("Reason for ban:");
     if (!reason) return;
     try {
       await banUser({
-        clerkId,
         userId: selected.listing.sellerId,
         reason,
       });

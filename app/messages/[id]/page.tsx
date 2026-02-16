@@ -1,8 +1,7 @@
 "use client";
 
 import { use, useState, useRef, useEffect, Suspense } from "react";
-import { useQuery, useMutation } from "convex/react";
-import { useUser } from "@clerk/nextjs";
+import { useQuery, useMutation, useConvexAuth } from "convex/react";
 import { useRouter } from "next/navigation";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
@@ -25,15 +24,13 @@ import {
 } from "lucide-react";
 
 function ConversationContent({ id }: { id: string }) {
-  const { user } = useUser();
+  const { isAuthenticated, isLoading } = useConvexAuth();
   const router = useRouter();
   const [message, setMessage] = useState("");
   const [showSafetyTip, setShowSafetyTip] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const currentUser = useQuery(api.users.getCurrentUser, {
-    clerkId: user?.id,
-  });
+  const currentUser = useQuery(api.users.getCurrentUser);
   const conversation = useQuery(
     api.messages.getConversationById,
     currentUser ? { conversationId: id as Id<"conversations">, userId: currentUser._id } : "skip"
@@ -50,9 +47,8 @@ function ConversationContent({ id }: { id: string }) {
   const updateStatus = useMutation(api.listings.updateStatus);
 
   const handleMarkAsSold = async () => {
-    if (!conversation?.listing?._id || !currentUser || !user?.id) return;
+    if (!conversation?.listing?._id || !currentUser) return;
     await updateStatus({
-      clerkId: user.id,
       listingId: conversation.listing._id as Id<"listings">,
       status: "sold",
     });

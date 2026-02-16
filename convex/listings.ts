@@ -9,7 +9,7 @@ import {
   validateListingInput,
   validateEnum,
   ALLOWED_VALUES,
-  getUserByClerkId,
+  getAuthenticatedUser,
 } from "./security";
 
 async function getBlocklist(ctx: QueryCtx | MutationCtx): Promise<Blocklist> {
@@ -179,12 +179,11 @@ export const getByCategory = query({
 
 export const updateStatus = mutation({
   args: {
-    clerkId: v.string(),
     listingId: v.id("listings"),
     status: v.string(),
   },
   handler: async (ctx, args) => {
-    const user = await getUserByClerkId(ctx, args.clerkId);
+    const user = await getAuthenticatedUser(ctx);
 
     await requireListingOwner(ctx, args.listingId, user._id);
 
@@ -199,11 +198,10 @@ export const updateStatus = mutation({
 
 export const deleteListing = mutation({
   args: {
-    clerkId: v.string(),
     listingId: v.id("listings"),
   },
   handler: async (ctx, args) => {
-    const user = await getUserByClerkId(ctx, args.clerkId);
+    const user = await getAuthenticatedUser(ctx);
 
     await checkRateLimit(ctx, user._id, "deleteListing");
 
@@ -215,7 +213,6 @@ export const deleteListing = mutation({
 
 export const update = mutation({
   args: {
-    clerkId: v.string(),
     listingId: v.id("listings"),
     title: v.string(),
     description: v.string(),
@@ -226,7 +223,7 @@ export const update = mutation({
     images: v.array(v.string()),
   },
   handler: async (ctx, args) => {
-    const user = await getUserByClerkId(ctx, args.clerkId);
+    const user = await getAuthenticatedUser(ctx);
 
     await checkRateLimit(ctx, user._id, "updateListing");
 

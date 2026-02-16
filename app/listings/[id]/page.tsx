@@ -1,8 +1,7 @@
 "use client";
 
 import { use, Suspense, useState } from "react";
-import { useQuery, useMutation } from "convex/react";
-import { useUser } from "@clerk/nextjs";
+import { useQuery, useMutation, useConvexAuth } from "convex/react";
 import { useRouter } from "next/navigation";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
@@ -34,15 +33,13 @@ const campusMapUrls: Record<string, string> = {
 
 function ListingContent({ id }: { id: string }) {
   const router = useRouter();
-  const { user } = useUser();
+  const { isAuthenticated } = useConvexAuth();
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
   const listing = useQuery(api.listings.getById, {
     listingId: id as Id<"listings">,
   });
-  const currentUser = useQuery(api.users.getCurrentUser, {
-    clerkId: user?.id,
-  });
+  const currentUser = useQuery(api.users.getCurrentUser);
   const existingConversation = useQuery(
     api.messages.getExistingConversation,
     currentUser && listing
@@ -268,7 +265,7 @@ function ListingContent({ id }: { id: string }) {
 
                 {!isOwner && listing.status === "active" && (
                   <div className="flex flex-col gap-3">
-                    {user ? (
+                    {isAuthenticated ? (
                       <button
                         onClick={handleContactSeller}
                         className="w-full py-3 md:py-4 bg-primary text-white rounded-xl font-bold text-base md:text-lg hover:bg-primary/90 transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary/20"
@@ -305,7 +302,7 @@ function ListingContent({ id }: { id: string }) {
                       <>
                         <button
                           onClick={() =>
-                            currentUser && user?.id && updateStatus({ clerkId: user.id, listingId: listing._id, status: "sold" })
+                            currentUser && updateStatus({ listingId: listing._id, status: "sold" })
                           }
                           className="w-full py-3 md:py-4 bg-accent-mint text-white rounded-xl font-bold hover:bg-accent-mint/90 transition-all flex items-center justify-center gap-2"
                         >

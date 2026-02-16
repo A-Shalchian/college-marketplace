@@ -1,6 +1,6 @@
 "use client";
 
-import { useUser } from "@clerk/nextjs";
+import { useConvexAuth } from "convex/react";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { usePathname } from "next/navigation";
@@ -29,16 +29,13 @@ const navItems = [
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  const { user, isLoaded } = useUser();
+  const { isAuthenticated, isLoading } = useConvexAuth();
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const isAdmin = useQuery(
-    api.admin.isAdmin,
-    user?.id ? { clerkId: user.id } : "skip"
-  );
+  const isAdmin = useQuery(api.admin.isAdmin);
 
-  if (!isLoaded || isAdmin === undefined) {
+  if (isLoading || isAdmin === undefined) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-background flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -46,7 +43,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     );
   }
 
-  if (!user || !isAdmin) {
+  if (!isAuthenticated || !isAdmin) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-background flex items-center justify-center p-4">
         <div className="bg-white dark:bg-card rounded-2xl p-8 max-w-md w-full text-center border border-gray-100 dark:border-border">

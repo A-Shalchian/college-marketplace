@@ -2,28 +2,22 @@
 
 import { useState, Suspense, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
-import { useQuery } from "convex/react";
-import { useUser } from "@clerk/nextjs";
+import { useQuery, useConvexAuth } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Navbar } from "@/components/navbar";
 import { ListingCard } from "@/components/listing-card";
 import { CategoryFilter, categories } from "@/components/category-filter";
 import { Footer } from "@/components/footer";
 import { MobileSearch } from "@/components/mobile-search";
-import { useStoreUser } from "@/hooks/use-store-user";
 import { Loader2, X, ChevronRight, ChevronDown, Shield } from "lucide-react";
 import Link from "next/link";
 
 type SortOption = "newest" | "oldest" | "price_low" | "price_high";
 
 function HomeContent() {
-  useStoreUser();
-  const { user } = useUser();
+  const { isAuthenticated } = useConvexAuth();
   const searchParams = useSearchParams();
-  const currentUser = useQuery(
-    api.users.getCurrentUser,
-    user ? { clerkId: user.id } : "skip"
-  );
+  const currentUser = useQuery(api.users.getCurrentUser);
   const searchQuery = searchParams.get("search") === "open" ? "" : (searchParams.get("search") || "");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [showMobileSearch, setShowMobileSearch] = useState(searchParams.get("search") === "open");

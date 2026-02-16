@@ -1,8 +1,8 @@
 "use client";
 
 import { Suspense, useState, useRef, useEffect } from "react";
-import { useQuery, useMutation } from "convex/react";
-import { useUser, useClerk } from "@clerk/nextjs";
+import { useQuery, useMutation, useConvexAuth } from "convex/react";
+import { useAuthActions } from "@convex-dev/auth/react";
 import { api } from "@/convex/_generated/api";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
@@ -15,7 +15,6 @@ import {
   Star,
   Calendar,
   Settings,
-  Pencil,
   Trash2,
   MapPin,
   ChevronDown,
@@ -27,7 +26,6 @@ import {
   Moon,
   Sun,
   Heart,
-  SlidersHorizontal,
 } from "lucide-react";
 import { Id } from "@/convex/_generated/dataModel";
 import { useTheme } from "@/components/providers/theme-provider";
@@ -43,8 +41,8 @@ type TabType = "active" | "sold" | "saved";
 type SortOption = "newest" | "oldest" | "price_low" | "price_high";
 
 function ProfileContent() {
-  const { user } = useUser();
-  const { openUserProfile, signOut } = useClerk();
+  const { isAuthenticated, isLoading } = useConvexAuth();
+  const { signOut } = useAuthActions();
   const { theme, toggleTheme } = useTheme();
   const [activeTab, setActiveTab] = useState<TabType>("active");
   const [showSettings, setShowSettings] = useState(false);
@@ -72,9 +70,7 @@ function ProfileContent() {
 
   const hasActiveFilters = minPrice || maxPrice;
 
-  const currentUser = useQuery(api.users.getCurrentUser, {
-    clerkId: user?.id,
-  });
+  const currentUser = useQuery(api.users.getCurrentUser);
   const myListings = useQuery(
     api.listings.getByUser,
     currentUser ? { userId: currentUser._id } : "skip"
@@ -111,23 +107,24 @@ function ProfileContent() {
     });
   };
 
-  const handleSignOut = () => {
-    signOut({ redirectUrl: "/" });
+  const handleSignOut = async () => {
+    await signOut();
+    window.location.href = "/";
   };
 
   const handleDelete = async (listingId: Id<"listings">) => {
-    if (!currentUser || !user?.id) return;
+    if (!currentUser) return;
     if (confirm("Are you sure you want to delete this listing?")) {
-      await deleteListing({ clerkId: user.id, listingId });
+      await deleteListing({ listingId });
     }
   };
 
   const handleMarkAsSold = async (listingId: Id<"listings">) => {
-    if (!currentUser || !user?.id) return;
-    await updateStatus({ clerkId: user.id, listingId, status: "sold" });
+    if (!currentUser) return;
+    await updateStatus({ listingId, status: "sold" });
   };
 
-  if (!user) {
+  if (!isAuthenticated && !isLoading) {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
@@ -138,7 +135,7 @@ function ProfileContent() {
     );
   }
 
-  if (currentUser === undefined || myListings === undefined) {
+  if (isLoading || currentUser === undefined || myListings === undefined) {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
@@ -193,10 +190,10 @@ function ProfileContent() {
           <div className="bg-white dark:bg-card rounded-xl p-6 md:p-8 subtle-float flex flex-col md:flex-row gap-6 md:gap-8 items-center md:items-start justify-between border border-gray-100 dark:border-border">
             <div className="flex flex-col md:flex-row items-center gap-6 md:gap-8">
               <div className="relative">
-                {user.imageUrl ? (
+                {currentUser?.imageUrl ? (
                   <div
                     className="w-28 h-28 md:w-36 md:h-36 rounded-full bg-cover bg-center border-4 border-white dark:border-card shadow-xl"
-                    style={{ backgroundImage: `url(${user.imageUrl})` }}
+                    style={{ backgroundImage: `url(${currentUser.imageUrl})` }}
                   />
                 ) : (
                   <div className="w-28 h-28 md:w-36 md:h-36 rounded-full bg-primary/10 dark:bg-primary/20 border-4 border-white dark:border-card shadow-xl flex items-center justify-center">
@@ -211,14 +208,14 @@ function ProfileContent() {
               <div className="text-center md:text-left">
                 <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mb-2">
                   <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight">
-                    {user.fullName}
+                    {currentUser?.name}
                   </h1>
                   <span className="px-3 py-1 bg-primary/10 text-primary text-xs font-bold rounded-full uppercase tracking-wider">
                     GBC Student
                   </span>
                 </div>
                 <p className="text-muted-foreground font-medium mb-4">
-                  {user.emailAddresses[0]?.emailAddress}
+                  {currentUser?.email}
                 </p>
                 <div className="flex flex-wrap justify-center md:justify-start gap-3">
                   <div className="flex items-center gap-1.5 bg-gray-50 dark:bg-muted px-3 py-1.5 rounded-lg border border-gray-100 dark:border-border">
@@ -234,13 +231,6 @@ function ProfileContent() {
             </div>
 
             <div className="flex gap-3 w-full md:w-auto">
-              <button
-                onClick={() => openUserProfile()}
-                className="flex-1 md:flex-none px-6 py-3 rounded-xl border-2 border-gray-100 dark:border-border font-bold text-sm hover:bg-gray-50 dark:hover:bg-muted transition-colors flex items-center justify-center gap-2"
-              >
-                <Pencil className="w-4 h-4" />
-                <span className="hidden sm:inline">Edit Profile</span>
-              </button>
               <div className="relative" ref={settingsRef}>
                 <button
                   onClick={() => setShowSettings(!showSettings)}

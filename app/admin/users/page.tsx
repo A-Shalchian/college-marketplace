@@ -18,12 +18,10 @@ import {
   Crown,
   Ban,
 } from "lucide-react";
-import { useAdminContext } from "../AdminContext";
 
 type FilterType = "all" | "active" | "banned" | "admins";
 
 export default function AdminUsers() {
-  const { clerkId } = useAdminContext();
   const [filter, setFilter] = useState<FilterType>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
@@ -32,7 +30,7 @@ export default function AdminUsers() {
   const [showRoleModal, setShowRoleModal] = useState(false);
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
 
-  const users = useQuery(api.admin.getAllUsers, clerkId ? { clerkId } : "skip");
+  const users = useQuery(api.admin.getAllUsers);
 
   const banUser = useMutation(api.admin.banUser);
   const unbanUser = useMutation(api.admin.unbanUser);
@@ -57,10 +55,9 @@ export default function AdminUsers() {
   const selected = users?.find((u) => u._id === selectedUser);
 
   const handleBan = async () => {
-    if (!selectedUser || !clerkId) return;
+    if (!selectedUser) return;
     try {
       await banUser({
-        clerkId,
         userId: selectedUser as Id<"users">,
         reason: banReason,
       });
@@ -72,20 +69,18 @@ export default function AdminUsers() {
   };
 
   const handleUnban = async (userId: Id<"users">) => {
-    if (!clerkId) return;
     try {
-      await unbanUser({ clerkId, userId });
+      await unbanUser({ userId });
     } catch (error) {
       alert(error instanceof Error ? error.message : "Failed to unban user");
     }
   };
 
   const handleWarn = async (userId: Id<"users">) => {
-    if (!clerkId) return;
     const reason = prompt("Reason for warning:");
     if (reason) {
       try {
-        await warnUser({ clerkId, userId, reason });
+        await warnUser({ userId, reason });
       } catch (error) {
         alert(error instanceof Error ? error.message : "Failed to warn user");
       }
@@ -93,10 +88,9 @@ export default function AdminUsers() {
   };
 
   const handleSetRole = async (role: string) => {
-    if (!selectedUser || !clerkId) return;
+    if (!selectedUser) return;
     try {
       await setUserRole({
-        clerkId,
         userId: selectedUser as Id<"users">,
         role,
       });

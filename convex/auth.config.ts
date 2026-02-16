@@ -1,7 +1,7 @@
 export default {
   providers: [
     {
-      domain: "https://polite-sole-35.clerk.accounts.dev",
+      domain: process.env.CONVEX_SITE_URL,
       applicationID: "convex",
     },
   ],

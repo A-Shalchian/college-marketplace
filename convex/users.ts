@@ -1,97 +1,26 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { getAuthUserId } from "@convex-dev/auth/server";
 import {
   requireActiveUser,
   checkRateLimit,
   validateString,
-  validateEmail,
   sanitizeInput,
   VALIDATION,
 } from "./security";
 
-export const createOrGetUser = mutation({
-  args: {
-    clerkId: v.string(),
-    email: v.string(),
-    name: v.string(),
-    imageUrl: v.optional(v.string()),
-  },
-  handler: async (ctx, args) => {
-    if (!args.clerkId || args.clerkId.length < 5 || args.clerkId.length > 100) {
-      throw new Error("Invalid authentication identifier");
-    }
-
-    const email = validateEmail(args.email);
-
-    const name = validateString(
-      sanitizeInput(args.name),
-      "Name",
-      VALIDATION.userName
-    );
-
-    let imageUrl = args.imageUrl;
-    if (imageUrl) {
-      const allowedDomains = [
-        "img.clerk.com",
-        "images.clerk.dev",
-        "gravatar.com",
-        "www.gravatar.com",
-      ];
-      try {
-        const url = new URL(imageUrl);
-        if (url.protocol !== "https:") {
-          imageUrl = undefined;
-        } else if (!allowedDomains.some((domain) => url.hostname === domain || url.hostname.endsWith(`.${domain}`))) {
-          imageUrl = undefined;
-        }
-      } catch {
-        imageUrl = undefined;
-      }
-    }
-
-    const existingUser = await ctx.db
-      .query("users")
-      .withIndex("by_clerk_id", (q) => q.eq("clerkId", args.clerkId))
-      .unique();
-
-    if (existingUser) {
-      if (existingUser.isBanned) {
-        throw new Error(
-          "Your account has been suspended. Reason: " +
-            (existingUser.banReason || "Policy violation")
-        );
-      }
-      return existingUser._id;
-    }
-
-    const userId = await ctx.db.insert("users", {
-      clerkId: args.clerkId,
-      email,
-      name,
-      imageUrl,
-      createdAt: Date.now(),
-    });
-
-    return userId;
-  },
-});
-
 export const getCurrentUser = query({
-  args: { clerkId: v.optional(v.string()) },
-  handler: async (ctx, args) => {
-    const clerkId = args.clerkId;
-    if (!clerkId) return null;
+  args: {},
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return null;
 
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_clerk_id", (q) => q.eq("clerkId", clerkId))
-      .unique();
+    const user = await ctx.db.get(userId);
 
     if (user) {
       return {
         _id: user._id,
         _creationTime: user._creationTime,
-        clerkId: user.clerkId,
         email: user.email,
         name: user.name,
         imageUrl: user.imageUrl,
@@ -183,8 +112,6 @@ export const updateProfile = mutation({
 
     if (args.imageUrl !== undefined) {
       const allowedDomains = [
-        "img.clerk.com",
-        "images.clerk.dev",
         "gravatar.com",
         "www.gravatar.com",
       ];

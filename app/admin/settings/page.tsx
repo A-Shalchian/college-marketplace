@@ -16,7 +16,6 @@ import {
   BadgeAlert,
   Code,
 } from "lucide-react";
-import { useAdminContext } from "../AdminContext";
 
 const categories = [
   { id: "drugs", label: "Drugs & Substances", icon: Pill, color: "text-purple-600 bg-purple-100 dark:bg-purple-900/20" },
@@ -27,7 +26,6 @@ const categories = [
 ];
 
 export default function AdminSettings() {
-  const { clerkId } = useAdminContext();
   const blocklist = useQuery(api.settings.getBlocklist);
   const initializeBlocklist = useMutation(api.settings.initializeBlocklist);
   const updateBlocklist = useMutation(api.settings.updateBlocklist);
@@ -45,9 +43,8 @@ export default function AdminSettings() {
   }, [blocklist]);
 
   const handleInitialize = async () => {
-    if (!clerkId) return;
     try {
-      await initializeBlocklist({ clerkId });
+      await initializeBlocklist({});
     } catch (error) {
       alert(error instanceof Error ? error.message : "Failed to initialize blocklist");
     }
@@ -74,11 +71,9 @@ export default function AdminSettings() {
   };
 
   const handleSave = async () => {
-    if (!clerkId) return;
     setSaving(true);
     try {
       await updateBlocklist({
-        clerkId,
         category: activeCategory,
         keywords: keywords[activeCategory] || [],
       });

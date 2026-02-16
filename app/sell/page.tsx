@@ -2,8 +2,7 @@
 
 import { useState, useRef, Suspense, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useMutation, useQuery } from "convex/react";
-import { useUser } from "@clerk/nextjs";
+import { useMutation, useQuery, useConvexAuth } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
@@ -40,12 +39,10 @@ const campusMapUrls: Record<string, string> = {
 
 function SellContent() {
   const router = useRouter();
-  const { user } = useUser();
+  const { isAuthenticated, isLoading } = useConvexAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const currentUser = useQuery(api.users.getCurrentUser, {
-    clerkId: user?.id,
-  });
+  const currentUser = useQuery(api.users.getCurrentUser);
   const createListing = useMutation(api.listings.create);
   const generateUploadUrl = useMutation(api.files.generateUploadUrl);
 
@@ -313,7 +310,7 @@ function SellContent() {
   const isFormValid =
     title && description && price && category && condition && campus && currentUser && imageFiles.length > 0;
 
-  if (!user) {
+  if (!isAuthenticated && !isLoading) {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />

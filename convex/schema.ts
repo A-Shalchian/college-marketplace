@@ -1,20 +1,29 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
+import { authTables } from "@convex-dev/auth/server";
 
 export default defineSchema({
+  ...authTables,
   users: defineTable({
-    clerkId: v.string(),
-    email: v.string(),
-    name: v.string(),
+    // Convex Auth standard fields
+    name: v.optional(v.string()),
+    image: v.optional(v.string()),
+    email: v.optional(v.string()),
+    emailVerificationTime: v.optional(v.number()),
+    phone: v.optional(v.string()),
+    phoneVerificationTime: v.optional(v.number()),
+    isAnonymous: v.optional(v.boolean()),
+    // Legacy field (kept for existing data compatibility)
+    clerkId: v.optional(v.string()),
+    // Custom app fields
     imageUrl: v.optional(v.string()),
     defaultCampus: v.optional(v.string()),
     role: v.optional(v.string()),
     isBanned: v.optional(v.boolean()),
     banReason: v.optional(v.string()),
     warningCount: v.optional(v.number()),
-    createdAt: v.number(),
+    createdAt: v.optional(v.number()),
   })
-    .index("by_clerk_id", ["clerkId"])
     .index("by_email", ["email"])
     .index("by_role", ["role"]),
 

@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { mutation } from "./_generated/server";
-import { requireActiveUser, checkRateLimit, getUserByClerkId } from "./security";
+import { requireActiveUser, checkRateLimit, getAuthenticatedUser } from "./security";
 
 export const generateUploadUrl = mutation({
   args: {
@@ -17,11 +17,10 @@ export const generateUploadUrl = mutation({
 
 export const deleteFile = mutation({
   args: {
-    clerkId: v.string(),
     storageId: v.id("_storage"),
   },
   handler: async (ctx, args) => {
-    const user = await getUserByClerkId(ctx, args.clerkId);
+    const user = await getAuthenticatedUser(ctx);
 
     await checkRateLimit(ctx, user._id, "deleteListing");
 

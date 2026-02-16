@@ -1,6 +1,7 @@
 import { QueryCtx, MutationCtx } from "./_generated/server";
 import { Id, Doc } from "./_generated/dataModel";
 import { internalMutation } from "./_generated/server";
+import { getAuthUserId } from "@convex-dev/auth/server";
 
 export const RATE_LIMITS = {
   createListing: { windowMs: 60 * 60 * 1000, maxRequests: 10 },
@@ -170,37 +171,13 @@ export async function requireActiveUser(
 export async function getAuthenticatedUser(
   ctx: QueryCtx | MutationCtx
 ): Promise<Doc<"users">> {
-  const identity = await ctx.auth.getUserIdentity();
+  const userId = await getAuthUserId(ctx);
 
-  if (!identity) {
+  if (!userId) {
     throw new Error("Unauthorized: You must be logged in");
   }
 
-  const user = await ctx.db
-    .query("users")
-    .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
-    .unique();
-
-  if (!user) {
-    throw new Error("User not found. Please refresh the page.");
-  }
-
-  if (user.isBanned) {
-    throw new Error("Your account has been suspended. Reason: " + (user.banReason || "Policy violation"));
-  }
-
-  return user;
-}
-
-// Look up user by clerkId (for when ctx.auth isn't configured)
-export async function getUserByClerkId(
-  ctx: QueryCtx | MutationCtx,
-  clerkId: string
-): Promise<Doc<"users">> {
-  const user = await ctx.db
-    .query("users")
-    .withIndex("by_clerk_id", (q) => q.eq("clerkId", clerkId))
-    .unique();
+  const user = await ctx.db.get(userId);
 
   if (!user) {
     throw new Error("User not found. Please refresh the page.");

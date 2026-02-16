@@ -2,20 +2,53 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { UserButton, SignInButton, useUser } from "@clerk/nextjs";
-import { Store, Search, PlusCircle, User, Menu, X, Home, MessageCircle } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useConvexAuth, useQuery } from "convex/react";
+import { useAuthActions } from "@convex-dev/auth/react";
+import { api } from "@/convex/_generated/api";
+import {
+  Store,
+  Search,
+  PlusCircle,
+  User,
+  Menu,
+  X,
+  Home,
+  MessageCircle,
+  LogOut,
+  ChevronDown,
+} from "lucide-react";
+import { useState, useEffect, useRef } from "react";
 
 export function Navbar() {
-  const { isSignedIn, isLoaded } = useUser();
+  const { isAuthenticated, isLoading } = useConvexAuth();
+  const { signOut } = useAuthActions();
+  const currentUser = useQuery(api.users.getCurrentUser);
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [searchQuery, setSearchQuery] = useState(searchParams.get("search") || "");
+  const [searchQuery, setSearchQuery] = useState(
+    searchParams.get("search") || ""
+  );
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [avatarMenuOpen, setAvatarMenuOpen] = useState(false);
+  const avatarMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setSearchQuery(searchParams.get("search") || "");
   }, [searchParams]);
+
+  // Close avatar dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        avatarMenuRef.current &&
+        !avatarMenuRef.current.contains(event.target as Node)
+      ) {
+        setAvatarMenuOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,6 +58,16 @@ export function Navbar() {
       router.push("/");
     }
   };
+
+  const handleSignOut = async () => {
+    await signOut();
+    setAvatarMenuOpen(false);
+    router.push("/");
+  };
+
+  const userInitial = currentUser?.name
+    ? currentUser.name.charAt(0).toUpperCase()
+    : "?";
 
   return (
     <header className="sticky top-0 z-50 w-full bg-white/80 dark:bg-[#0f1419] backdrop-blur-md border-b border-gray-100 dark:border-border">
@@ -38,7 +81,10 @@ export function Navbar() {
           </h1>
         </Link>
 
-        <form onSubmit={handleSearch} className="flex-1 max-w-2xl relative hidden md:block">
+        <form
+          onSubmit={handleSearch}
+          className="flex-1 max-w-2xl relative hidden md:block"
+        >
           <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-muted-foreground">
             <Search className="w-5 h-5" />
           </div>
@@ -52,7 +98,7 @@ export function Navbar() {
         </form>
 
         <div className="flex items-center gap-6">
-          {isLoaded && isSignedIn ? (
+          {!isLoading && isAuthenticated ? (
             <>
               <nav className="hidden lg:flex items-center gap-6">
                 <Link
@@ -76,32 +122,66 @@ export function Navbar() {
                 <PlusCircle className="w-[18px] h-[18px]" />
                 <span>Post Item</span>
               </Link>
-              <div className="relative">
-                <UserButton
-                  afterSignOutUrl="/"
-                  appearance={{
-                    elements: {
-                      avatarBox: "w-10 h-10 rounded-full border-2 border-white dark:border-card",
-                    },
-                  }}
+
+              {/* Avatar dropdown */}
+              <div className="relative" ref={avatarMenuRef}>
+                <button
+                  onClick={() => setAvatarMenuOpen(!avatarMenuOpen)}
+                  className="flex items-center gap-1.5 group"
                 >
-                  <UserButton.MenuItems>
-                    <UserButton.Link
-                      label="Dashboard"
-                      labelIcon={<User className="w-4 h-4" />}
+                  <div className="relative">
+                    {currentUser?.profileImage ? (
+                      <img
+                        src={currentUser.profileImage}
+                        alt={currentUser.name || "User"}
+                        className="w-10 h-10 rounded-full border-2 border-white dark:border-card object-cover"
+                      />
+                    ) : (
+                      <div className="w-10 h-10 rounded-full border-2 border-white dark:border-card bg-primary text-white flex items-center justify-center font-bold text-sm">
+                        {userInitial}
+                      </div>
+                    )}
+                    <div className="absolute bottom-0 right-0 w-3 h-3 bg-accent-mint border-2 border-white dark:border-card rounded-full" />
+                  </div>
+                  <ChevronDown className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors hidden lg:block" />
+                </button>
+
+                {avatarMenuOpen && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-card rounded-xl shadow-xl border border-gray-100 dark:border-border py-2 z-50">
+                    <div className="px-4 py-2 border-b border-gray-100 dark:border-border">
+                      <p className="text-sm font-semibold text-foreground truncate">
+                        {currentUser?.name || "User"}
+                      </p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {currentUser?.email || ""}
+                      </p>
+                    </div>
+                    <Link
                       href="/profile"
-                    />
-                  </UserButton.MenuItems>
-                </UserButton>
-                <div className="absolute bottom-0 right-0 w-3 h-3 bg-accent-mint border-2 border-white dark:border-card rounded-full" />
+                      onClick={() => setAvatarMenuOpen(false)}
+                      className="flex items-center gap-3 px-4 py-2.5 text-sm text-foreground hover:bg-gray-50 dark:hover:bg-muted transition-colors"
+                    >
+                      <User className="w-4 h-4" />
+                      Profile
+                    </Link>
+                    <button
+                      onClick={handleSignOut}
+                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      Sign Out
+                    </button>
+                  </div>
+                )}
               </div>
             </>
-          ) : (
-            <SignInButton mode="modal">
-              <button className="flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-primary/90 transition-all shadow-lg shadow-primary/20">
-                Sign In
-              </button>
-            </SignInButton>
+          ) : isLoading ? null : (
+            <Link
+              href="/sign-in"
+              className="flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-primary/90 transition-all shadow-lg shadow-primary/20"
+            >
+              Sign In
+            </Link>
           )}
 
           {/* Mobile hamburger menu button */}
@@ -110,7 +190,11 @@ export function Navbar() {
             className="md:hidden p-2 text-muted-foreground hover:text-foreground transition-colors"
             aria-label="Toggle menu"
           >
-            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            {mobileMenuOpen ? (
+              <X className="w-6 h-6" />
+            ) : (
+              <Menu className="w-6 h-6" />
+            )}
           </button>
         </div>
       </div>
@@ -144,7 +228,7 @@ export function Navbar() {
                 <span className="font-medium">Home</span>
               </Link>
 
-              {isLoaded && isSignedIn ? (
+              {!isLoading && isAuthenticated ? (
                 <>
                   <Link
                     href="/sell"
@@ -178,14 +262,26 @@ export function Navbar() {
                     <Store className="w-5 h-5" />
                     <span className="font-medium">My Listings</span>
                   </Link>
+                  <button
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      handleSignOut();
+                    }}
+                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
+                  >
+                    <LogOut className="w-5 h-5" />
+                    <span className="font-medium">Sign Out</span>
+                  </button>
                 </>
               ) : (
                 <div className="px-4 py-3">
-                  <SignInButton mode="modal">
-                    <button className="w-full flex items-center justify-center gap-2 bg-primary text-white px-5 py-3 rounded-xl font-bold text-sm hover:bg-primary/90 transition-all">
-                      Sign In
-                    </button>
-                  </SignInButton>
+                  <Link
+                    href="/sign-in"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="w-full flex items-center justify-center gap-2 bg-primary text-white px-5 py-3 rounded-xl font-bold text-sm hover:bg-primary/90 transition-all"
+                  >
+                    Sign In
+                  </Link>
                 </div>
               )}
             </nav>

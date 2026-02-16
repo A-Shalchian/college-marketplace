@@ -1,8 +1,7 @@
 "use client";
 
 import { Suspense, useState } from "react";
-import { useQuery } from "convex/react";
-import { useUser } from "@clerk/nextjs";
+import { useQuery, useConvexAuth } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Navbar } from "@/components/navbar";
 import Link from "next/link";
@@ -17,12 +16,10 @@ import {
 type FilterType = "all" | "buying" | "selling";
 
 function MessagesContent() {
-  const { user } = useUser();
+  const { isAuthenticated, isLoading } = useConvexAuth();
   const [filter, setFilter] = useState<FilterType>("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const currentUser = useQuery(api.users.getCurrentUser, {
-    clerkId: user?.id,
-  });
+  const currentUser = useQuery(api.users.getCurrentUser);
   const conversations = useQuery(
     api.messages.getUserConversations,
     currentUser ? { userId: currentUser._id } : "skip"
@@ -43,7 +40,7 @@ function MessagesContent() {
     return matchesFilter && matchesSearch;
   });
 
-  if (!user) {
+  if (!isAuthenticated && !isLoading) {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />

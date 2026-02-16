@@ -2,8 +2,7 @@
 
 import { use, useState, useRef, useEffect, Suspense } from "react";
 import { useRouter } from "next/navigation";
-import { useMutation, useQuery } from "convex/react";
-import { useUser } from "@clerk/nextjs";
+import { useMutation, useQuery, useConvexAuth } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { Navbar } from "@/components/navbar";
@@ -35,15 +34,13 @@ const MAX_IMAGES = 10;
 
 function EditListingContent({ id }: { id: string }) {
   const router = useRouter();
-  const { user } = useUser();
+  const { isAuthenticated } = useConvexAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const listing = useQuery(api.listings.getById, {
     listingId: id as Id<"listings">,
   });
-  const currentUser = useQuery(api.users.getCurrentUser, {
-    clerkId: user?.id,
-  });
+  const currentUser = useQuery(api.users.getCurrentUser);
   const updateListing = useMutation(api.listings.update);
   const deleteListing = useMutation(api.listings.deleteListing);
   const generateUploadUrl = useMutation(api.files.generateUploadUrl);
@@ -245,7 +242,6 @@ function EditListingContent({ id }: { id: string }) {
       const newStorageIds = await Promise.all(uploadPromises);
 
       await updateListing({
-        clerkId: user!.id,
         listingId: listing._id,
         title,
         description,
@@ -266,12 +262,12 @@ function EditListingContent({ id }: { id: string }) {
   };
 
   const handleDelete = async () => {
-    if (!listing || !currentUser || !user?.id) return;
+    if (!listing || !currentUser) return;
     if (!confirm("Are you sure you want to delete this listing? This cannot be undone.")) return;
 
     setIsDeleting(true);
     try {
-      await deleteListing({ clerkId: user.id, listingId: listing._id });
+      await deleteListing({ listingId: listing._id });
       router.push("/profile");
     } catch (error) {
       console.error("Failed to delete listing:", error);

@@ -254,7 +254,7 @@ export const getConversationById = query({
     const sanitizeUser = (user: typeof buyer | typeof seller) => {
       if (!user) return null;
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { clerkId: _clerkId, email: _email, banReason: _banReason, ...safeUser } = user;
+      const { email: _email, banReason: _banReason, ...safeUser } = user;
       return safeUser;
     };
 

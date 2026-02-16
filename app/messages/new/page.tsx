@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, Suspense } from "react";
-import { useQuery, useMutation } from "convex/react";
-import { useUser } from "@clerk/nextjs";
+import { useQuery, useMutation, useConvexAuth } from "convex/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
@@ -18,7 +17,7 @@ import {
 } from "lucide-react";
 
 function NewConversationContent() {
-  const { user } = useUser();
+  const { isAuthenticated, isLoading } = useConvexAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [message, setMessage] = useState("");
@@ -28,9 +27,7 @@ function NewConversationContent() {
   const listingId = searchParams.get("listing") as Id<"listings"> | null;
   const sellerId = searchParams.get("seller") as Id<"users"> | null;
 
-  const currentUser = useQuery(api.users.getCurrentUser, {
-    clerkId: user?.id,
-  });
+  const currentUser = useQuery(api.users.getCurrentUser);
 
   const listing = useQuery(
     api.listings.getById,
@@ -45,7 +42,7 @@ function NewConversationContent() {
   const sendMessage = useMutation(api.messages.sendMessage);
 
   // If user is not logged in
-  if (!user) {
+  if (!isAuthenticated && !isLoading) {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
