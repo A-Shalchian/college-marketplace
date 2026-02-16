@@ -16,6 +16,7 @@ import {
   MessageCircle,
   LogOut,
   ChevronDown,
+  Users,
 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 
@@ -110,6 +111,12 @@ export function Navbar() {
                   className="text-sm font-semibold hover:text-primary transition-colors"
                 >
                   My Listings
+                </Link>
+                <Link
+                  href="/community"
+                  className="text-sm font-semibold hover:text-primary transition-colors"
+                >
+                  Community
                 </Link>
                 <Link
                   href="/messages"
@@ -259,6 +266,14 @@ export function Navbar() {
                         {unreadCount > 9 ? "9+" : unreadCount}
                       </span>
                     )}
+                  </Link>
+                  <Link
+                    href="/community"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-foreground hover:bg-gray-100 dark:hover:bg-muted transition-colors"
+                  >
+                    <Users className="w-5 h-5" />
+                    <span className="font-medium">Community</span>
                   </Link>
                   <Link
                     href="/profile"
