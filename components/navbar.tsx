@@ -130,9 +130,9 @@ export function Navbar() {
                   className="flex items-center gap-1.5 group"
                 >
                   <div className="relative">
-                    {currentUser?.profileImage ? (
+                    {currentUser?.imageUrl ? (
                       <img
-                        src={currentUser.profileImage}
+                        src={currentUser.imageUrl}
                         alt={currentUser.name || "User"}
                         className="w-10 h-10 rounded-full border-2 border-white dark:border-card object-cover"
                       />

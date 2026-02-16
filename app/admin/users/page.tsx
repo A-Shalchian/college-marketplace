@@ -46,8 +46,8 @@ export default function AdminUsers() {
 
     const matchesSearch =
       !searchQuery ||
-      u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      u.email.toLowerCase().includes(searchQuery.toLowerCase());
+      u.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      u.email?.toLowerCase().includes(searchQuery.toLowerCase());
 
     return matchesFilter && matchesSearch;
   });
@@ -311,7 +311,7 @@ export default function AdminUsers() {
                     <div>
                       <p className="text-sm font-medium">Joined</p>
                       <p className="text-xs text-muted-foreground">
-                        {new Date(selected.createdAt).toLocaleDateString("en-US", {
+                        {new Date(selected.createdAt ?? Date.now()).toLocaleDateString("en-US", {
                           year: "numeric",
                           month: "long",
                           day: "numeric",
