@@ -16,3 +16,5 @@ convex/_generated
 
 # stitch
 /stitch/
+# clerk configuration (can include secrets)
+/.clerk/

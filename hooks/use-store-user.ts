@@ -1,6 +1,15 @@
-// This hook is no longer needed. User creation is handled automatically
-// by Convex Auth during sign-up via the Password provider's profile() callback.
-// Kept as an empty export to avoid breaking any lingering imports.
+import { useUser } from "@clerk/nextjs";
+import { useConvexAuth, useMutation } from "convex/react";
+import { useEffect } from "react";
+import { api } from "@/convex/_generated/api";
+
 export function useStoreUser() {
-  // no-op
+  const { isAuthenticated } = useConvexAuth();
+  const { user } = useUser();
+  const storeUser = useMutation(api.users.store);
+
+  useEffect(() => {
+    if (!isAuthenticated || !user) return;
+    storeUser({}).catch(console.error);
+  }, [isAuthenticated, user?.id, storeUser]);
 }

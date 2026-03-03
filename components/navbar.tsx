@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useConvexAuth, useQuery } from "convex/react";
-import { useAuthActions } from "@convex-dev/auth/react";
+import { useClerk } from "@clerk/nextjs";
 import { api } from "@/convex/_generated/api";
 import {
   Store,
@@ -22,7 +22,7 @@ import { useState, useEffect, useRef } from "react";
 
 export function Navbar() {
   const { isAuthenticated, isLoading } = useConvexAuth();
-  const { signOut } = useAuthActions();
+  const { signOut } = useClerk();
   const currentUser = useQuery(api.users.getCurrentUser);
   const unreadCount = useQuery(
     api.messages.getUnreadCount,
@@ -41,7 +41,6 @@ export function Navbar() {
     setSearchQuery(searchParams.get("search") || "");
   }, [searchParams]);
 
-  // Close avatar dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (
@@ -65,9 +64,8 @@ export function Navbar() {
   };
 
   const handleSignOut = async () => {
-    await signOut();
+    await signOut({ redirectUrl: "/" });
     setAvatarMenuOpen(false);
-    router.push("/");
   };
 
   const userInitial = currentUser?.name
@@ -139,7 +137,6 @@ export function Navbar() {
                 <span>Post Item</span>
               </Link>
 
-              {/* Avatar dropdown */}
               <div className="relative" ref={avatarMenuRef}>
                 <button
                   onClick={() => setAvatarMenuOpen(!avatarMenuOpen)}
@@ -200,7 +197,6 @@ export function Navbar() {
             </Link>
           )}
 
-          {/* Mobile hamburger menu button */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             className="md:hidden p-2 text-muted-foreground hover:text-foreground transition-colors"
@@ -215,11 +211,9 @@ export function Navbar() {
         </div>
       </div>
 
-      {/* Mobile menu overlay */}
       {mobileMenuOpen && (
         <div className="md:hidden bg-white dark:bg-[#0f1419] border-b border-gray-100 dark:border-border">
           <div className="px-6 py-4 space-y-4">
-            {/* Mobile search */}
             <form onSubmit={handleSearch} className="relative">
               <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-muted-foreground">
                 <Search className="w-5 h-5" />
@@ -233,7 +227,6 @@ export function Navbar() {
               />
             </form>
 
-            {/* Mobile nav links */}
             <nav className="space-y-1">
               <Link
                 href="/"

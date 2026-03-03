@@ -2,7 +2,7 @@
 
 import { Suspense, useState, useRef, useEffect } from "react";
 import { useQuery, useMutation, useConvexAuth } from "convex/react";
-import { useAuthActions } from "@convex-dev/auth/react";
+import { useClerk } from "@clerk/nextjs";
 import { api } from "@/convex/_generated/api";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
@@ -41,7 +41,7 @@ type SortOption = "newest" | "oldest" | "price_low" | "price_high";
 
 function ProfileContent() {
   const { isAuthenticated, isLoading } = useConvexAuth();
-  const { signOut } = useAuthActions();
+  const { signOut } = useClerk();
   const { theme, toggleTheme } = useTheme();
   const [activeTab, setActiveTab] = useState<TabType>("active");
   const [showSettings, setShowSettings] = useState(false);
@@ -107,8 +107,7 @@ function ProfileContent() {
   };
 
   const handleSignOut = async () => {
-    await signOut();
-    window.location.href = "/";
+    await signOut({ redirectUrl: "/" });
   };
 
   const handleDelete = async (listingId: Id<"listings">) => {

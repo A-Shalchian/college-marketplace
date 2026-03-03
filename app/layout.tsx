@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
-import { ConvexAuthNextjsServerProvider } from "@convex-dev/auth/nextjs/server";
+import { ClerkProvider } from "@clerk/nextjs";
 import { ConvexClientProvider } from "@/components/providers/convex-provider";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 
@@ -22,7 +22,25 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ConvexAuthNextjsServerProvider>
+    <ClerkProvider
+      appearance={{
+        variables: {
+          colorPrimary: "#28618a",
+        },
+      }}
+      localization={{
+        signIn: {
+          start: {
+            subtitle: "Enter your @georgebrown.ca email to continue",
+          },
+        },
+        signUp: {
+          start: {
+            subtitle: "Use your @georgebrown.ca email to create an account",
+          },
+        },
+      }}
+    >
       <html lang="en" suppressHydrationWarning>
         <body className={`${jakarta.variable} antialiased`}>
           <ThemeProvider>
@@ -30,6 +48,6 @@ export default function RootLayout({
           </ThemeProvider>
         </body>
       </html>
-    </ConvexAuthNextjsServerProvider>
+    </ClerkProvider>
   );
 }

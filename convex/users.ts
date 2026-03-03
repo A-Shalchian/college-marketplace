@@ -1,6 +1,5 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-import { getAuthUserId } from "@convex-dev/auth/server";
 import {
   requireActiveUser,
   checkRateLimit,
@@ -9,13 +8,67 @@ import {
   VALIDATION,
 } from "./security";
 
+export const store = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+
+    const email = identity.email?.trim().toLowerCase();
+    if (!email || !email.endsWith("@georgebrown.ca")) {
+      throw new Error("Only @georgebrown.ca email addresses are allowed");
+    }
+
+    const existingByClerkId = await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    if (existingByClerkId) {
+      await ctx.db.patch(existingByClerkId._id, {
+        name: identity.name ?? existingByClerkId.name,
+        email: identity.email ?? existingByClerkId.email,
+        imageUrl: identity.pictureUrl ?? existingByClerkId.imageUrl,
+      });
+      return existingByClerkId._id;
+    }
+
+    if (identity.email) {
+      const existingByEmail = await ctx.db
+        .query("users")
+        .withIndex("email", (q) => q.eq("email", identity.email))
+        .first();
+
+      if (existingByEmail) {
+        await ctx.db.patch(existingByEmail._id, {
+          clerkId: identity.subject,
+          name: identity.name ?? existingByEmail.name,
+          imageUrl: identity.pictureUrl ?? existingByEmail.imageUrl,
+        });
+        return existingByEmail._id;
+      }
+    }
+
+    return await ctx.db.insert("users", {
+      clerkId: identity.subject,
+      name: identity.name ?? "",
+      email: identity.email ?? "",
+      role: "user",
+      createdAt: Date.now(),
+    });
+  },
+});
+
 export const getCurrentUser = query({
   args: {},
   handler: async (ctx) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) return null;
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return null;
 
-    const user = await ctx.db.get(userId);
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
+      .unique();
 
     if (user) {
       return {

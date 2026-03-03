@@ -1,8 +1,8 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { Id } from "./_generated/dataModel";
-import { getAuthUserId } from "@convex-dev/auth/server";
 import {
+  getUserId,
   requireAdmin,
   requireSuperAdmin,
   requireActiveUser,
@@ -20,7 +20,7 @@ import {
 export const isAdmin = query({
   args: {},
   handler: async (ctx) => {
-    const userId = await getAuthUserId(ctx);
+    const userId = await getUserId(ctx);
     if (!userId) return false;
 
     const user = await ctx.db.get(userId);
@@ -31,7 +31,7 @@ export const isAdmin = query({
 export const getStats = query({
   args: {},
   handler: async (ctx) => {
-    const userId = await getAuthUserId(ctx);
+    const userId = await getUserId(ctx);
     if (!userId) return null;
     const admin = await ctx.db.get(userId);
     if (!admin) return null;
@@ -64,7 +64,7 @@ export const getStats = query({
 export const getAllUsers = query({
   args: {},
   handler: async (ctx) => {
-    const userId = await getAuthUserId(ctx);
+    const userId = await getUserId(ctx);
     if (!userId) return null;
     const admin = await ctx.db.get(userId);
     if (!admin) return null;
@@ -91,7 +91,7 @@ export const getAllUsers = query({
 export const getAllListings = query({
   args: {},
   handler: async (ctx) => {
-    const userId = await getAuthUserId(ctx);
+    const userId = await getUserId(ctx);
     if (!userId) return null;
     const admin = await ctx.db.get(userId);
     if (!admin) return null;
@@ -117,7 +117,7 @@ export const getAllListings = query({
 export const getFlaggedListings = query({
   args: {},
   handler: async (ctx) => {
-    const userId = await getAuthUserId(ctx);
+    const userId = await getUserId(ctx);
     if (!userId) return null;
     const admin = await ctx.db.get(userId);
     if (!admin) return null;
@@ -147,7 +147,7 @@ export const getFlaggedListings = query({
 export const getAllReports = query({
   args: {},
   handler: async (ctx) => {
-    const userId = await getAuthUserId(ctx);
+    const userId = await getUserId(ctx);
     if (!userId) return null;
     const admin = await ctx.db.get(userId);
     if (!admin) return null;
@@ -171,7 +171,7 @@ export const getAllReports = query({
 export const getRecentActivity = query({
   args: {},
   handler: async (ctx) => {
-    const userId = await getAuthUserId(ctx);
+    const userId = await getUserId(ctx);
     if (!userId) return null;
     const admin = await ctx.db.get(userId);
     if (!admin) return null;
