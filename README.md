@@ -30,4 +30,6 @@ A campus marketplace for George Brown College students to buy and sell items saf
 
 ## Author
 
-Built by [Arash Shalchian](https://github.com/A-Shalchian)
+Built by [Arash Shalchian](https://github.com/A-Shalchian), 
+[Diana Mohammadi](https://github.com/diana-mohammadi), 
+and [Radin Madad Nezhad Aligorkeh](https://github.com/radinMadadNezhad).
