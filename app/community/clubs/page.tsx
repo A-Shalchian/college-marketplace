@@ -143,8 +143,15 @@ function ClubsContent() {
               <Link
                 key={club._id}
                 href={`/community/clubs/${club._id}`}
-                className="block bg-white dark:bg-card rounded-xl border border-gray-100 dark:border-border p-5 hover:border-primary/30 transition-all"
+                className="block bg-white dark:bg-card rounded-xl border border-gray-100 dark:border-border overflow-hidden hover:border-primary/30 transition-all"
               >
+                {club.imageUrl && (
+                  <div
+                    className="w-full h-32 bg-cover bg-center"
+                    style={{ backgroundImage: `url(${club.imageUrl})` }}
+                  />
+                )}
+                <div className={club.imageUrl ? "p-5 pt-3" : "p-5"}>
                 <div className="flex items-center gap-2 mb-2">
                   <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${getCategoryColor(club.category)}`}>
                     {club.category}
@@ -162,6 +169,7 @@ function ClubsContent() {
                     <Users className="w-3.5 h-3.5" /> {club.memberCount} {club.memberCount === 1 ? "member" : "members"}
                   </span>
                   <span>{getTimeAgo(club.createdAt)}</span>
+                </div>
                 </div>
               </Link>
             ))}

@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query, QueryCtx, MutationCtx } from "./_generated/server";
+import { Id } from "./_generated/dataModel";
 import { getAuthenticatedUser } from "./security";
 import { moderateContent, Blocklist } from "./moderation";
 
@@ -49,8 +50,13 @@ export const getClubs = query({
     const clubsWithCreators = await Promise.all(
       clubs.map(async (club) => {
         const creator = await ctx.db.get(club.creatorId);
+        let imageUrl: string | null = null;
+        if (club.imageId) {
+          imageUrl = await ctx.storage.getUrl(club.imageId as Id<"_storage">);
+        }
         return {
           ...club,
+          imageUrl,
           creator: creator
             ? { _id: creator._id, name: creator.name, imageUrl: creator.imageUrl }
             : null,
@@ -69,9 +75,14 @@ export const getClubById = query({
     if (!club) return null;
 
     const creator = await ctx.db.get(club.creatorId);
+    let imageUrl: string | null = null;
+    if (club.imageId) {
+      imageUrl = await ctx.storage.getUrl(club.imageId as Id<"_storage">);
+    }
 
     return {
       ...club,
+      imageUrl,
       creator: creator
         ? { _id: creator._id, name: creator.name, imageUrl: creator.imageUrl }
         : null,
@@ -171,6 +182,7 @@ export const createClub = mutation({
     description: v.string(),
     campus: v.string(),
     category: v.string(),
+    imageId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const user = await getAuthenticatedUser(ctx);
@@ -200,6 +212,7 @@ export const createClub = mutation({
       description,
       campus: args.campus,
       category: args.category,
+      imageId: args.imageId,
       memberCount: 1,
       status: "active",
       createdAt: Date.now(),
@@ -317,6 +330,7 @@ export const updateClub = mutation({
     clubId: v.id("clubs"),
     name: v.optional(v.string()),
     description: v.optional(v.string()),
+    imageId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const user = await getAuthenticatedUser(ctx);
@@ -329,7 +343,7 @@ export const updateClub = mutation({
       throw new Error("Only the club creator or a site admin can update this club");
     }
 
-    const updates: Record<string, string> = {};
+    const updates: Record<string, unknown> = {};
 
     if (args.name !== undefined) {
       const name = args.name.trim();
@@ -347,11 +361,15 @@ export const updateClub = mutation({
       updates.description = description;
     }
 
+    if (args.imageId !== undefined) {
+      updates.imageId = args.imageId;
+    }
+
     if (Object.keys(updates).length > 0) {
       const blocklist = await getBlocklist(ctx);
       const moderation = moderateContent(
-        updates.name || club.name,
-        updates.description || club.description,
+        (updates.name as string) || club.name,
+        (updates.description as string) || club.description,
         blocklist
       );
 

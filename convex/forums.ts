@@ -324,6 +324,80 @@ export const togglePin = mutation({
   },
 });
 
+export const editPost = mutation({
+  args: {
+    postId: v.id("forumPosts"),
+    title: v.string(),
+    content: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const user = await getAuthenticatedUser(ctx);
+
+    const post = await ctx.db.get(args.postId);
+    if (!post) throw new Error("Post not found");
+
+    const isAdmin = user.role === "admin" || user.role === "super_admin";
+    if (post.authorId !== user._id && !isAdmin) {
+      throw new Error("You can only edit your own posts");
+    }
+
+    const title = args.title.trim();
+    const content = args.content.trim();
+
+    if (title.length < 3 || title.length > 200) {
+      throw new Error("Title must be between 3 and 200 characters");
+    }
+    if (content.length < 10 || content.length > 10000) {
+      throw new Error("Content must be between 10 and 10,000 characters");
+    }
+
+    const blocklist = await getBlocklist(ctx);
+    const moderation = moderateContent(title, content, blocklist);
+
+    if (moderation.status === "rejected") {
+      throw new Error(
+        "Your edit contains content that violates our community guidelines."
+      );
+    }
+
+    await ctx.db.patch(args.postId, { title, content });
+  },
+});
+
+export const editReply = mutation({
+  args: {
+    replyId: v.id("forumReplies"),
+    content: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const user = await getAuthenticatedUser(ctx);
+
+    const reply = await ctx.db.get(args.replyId);
+    if (!reply) throw new Error("Reply not found");
+
+    const isAdmin = user.role === "admin" || user.role === "super_admin";
+    if (reply.authorId !== user._id && !isAdmin) {
+      throw new Error("You can only edit your own replies");
+    }
+
+    const content = args.content.trim();
+    if (content.length < 1 || content.length > 5000) {
+      throw new Error("Reply must be between 1 and 5,000 characters");
+    }
+
+    const blocklist = await getBlocklist(ctx);
+    const moderation = moderateContent("", content, blocklist);
+
+    if (moderation.status === "rejected") {
+      throw new Error(
+        "Your edit contains content that violates our community guidelines."
+      );
+    }
+
+    await ctx.db.patch(args.replyId, { content });
+  },
+});
+
 export const deletePost = mutation({
   args: {
     postId: v.id("forumPosts"),
