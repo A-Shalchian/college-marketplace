@@ -11,7 +11,6 @@ import {
   Calendar,
   Users,
   ArrowRight,
-  Construction,
   MessageCircle,
   BookOpen,
   Home,
@@ -123,14 +122,46 @@ function CommunityContent() {
         )}
 
         {activeTab === "events" && (
-          <div className="text-center py-20">
-            <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-              <Construction className="w-10 h-10 text-primary" />
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xl font-bold">Campus Events</h3>
+              {isAuthenticated && (
+                <Link
+                  href="/community/events/create"
+                  className="flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-primary/90 transition-all"
+                >
+                  Create Event
+                </Link>
+              )}
             </div>
-            <h3 className="text-xl font-bold mb-2">Events Coming Soon</h3>
-            <p className="text-muted-foreground text-sm max-w-md mx-auto">
-              Create and discover campus events, study groups, and meetups. This feature is being built for the next update.
-            </p>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              {[
+                { id: "social", label: "Social", icon: Heart, color: "bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-100 dark:border-amber-500/20" },
+                { id: "academic", label: "Academic", icon: GraduationCap, color: "bg-primary/5 dark:bg-primary/10 text-primary border border-primary/10 dark:border-primary/20" },
+                { id: "sports", label: "Sports", icon: Trophy, color: "bg-accent-coral/5 dark:bg-accent-coral/10 text-accent-coral border border-accent-coral/10 dark:border-accent-coral/20" },
+                { id: "workshop", label: "Workshop", icon: Monitor, color: "bg-accent-mint/5 dark:bg-accent-mint/10 text-accent-mint border border-accent-mint/10 dark:border-accent-mint/20" },
+                { id: "networking", label: "Networking", icon: Globe, color: "bg-purple-50 dark:bg-purple-500/10 text-purple-700 dark:text-purple-400 border border-purple-100 dark:border-purple-500/20" },
+                { id: "cultural", label: "Cultural", icon: Palette, color: "bg-pink-50 dark:bg-pink-500/10 text-pink-700 dark:text-pink-400 border border-pink-100 dark:border-pink-500/20" },
+              ].map((cat) => {
+                const Icon = cat.icon;
+                return (
+                  <Link
+                    key={cat.id}
+                    href={`/community/events?category=${cat.id}`}
+                    className={`${cat.color} p-4 rounded-xl flex items-center gap-3 hover:scale-[1.02] transition-transform`}
+                  >
+                    <Icon className="w-5 h-5 shrink-0" />
+                    <span className="font-bold text-sm">{cat.label}</span>
+                  </Link>
+                );
+              })}
+            </div>
+            <Link
+              href="/community/events"
+              className="flex items-center gap-2 text-primary font-semibold text-sm hover:underline"
+            >
+              Browse all events <ArrowRight className="w-4 h-4" />
+            </Link>
           </div>
         )}
 
