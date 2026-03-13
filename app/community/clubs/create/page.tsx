@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useConvexAuth } from "convex/react";
 import { api } from "@/convex/_generated/api";
@@ -10,6 +10,8 @@ import {
   Loader2,
   ArrowLeft,
   Users,
+  ImagePlus,
+  X,
 } from "lucide-react";
 
 const categories = [
@@ -32,13 +34,35 @@ function CreateClubContent() {
   const router = useRouter();
   const currentUser = useQuery(api.users.getCurrentUser);
   const createClub = useMutation(api.clubs.createClub);
+  const generateUploadUrl = useMutation(api.files.generateUploadUrl);
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("Academic");
   const [campus, setCampus] = useState("St. James Campus");
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const imageRef = useRef<HTMLInputElement>(null);
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      setError("Image must be under 5MB");
+      return;
+    }
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+      setError("Only JPEG, PNG, and WebP images are allowed");
+      return;
+    }
+    setImageFile(file);
+    const reader = new FileReader();
+    reader.onload = () => setImagePreview(reader.result as string);
+    reader.readAsDataURL(file);
+    setError("");
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,11 +81,24 @@ function CreateClubContent() {
 
     setIsSubmitting(true);
     try {
+      let imageId: string | undefined;
+      if (imageFile) {
+        const uploadUrl = await generateUploadUrl({ userId: currentUser._id });
+        const result = await fetch(uploadUrl, {
+          method: "POST",
+          headers: { "Content-Type": imageFile.type },
+          body: imageFile,
+        });
+        const { storageId } = await result.json();
+        imageId = storageId;
+      }
+
       const clubId = await createClub({
         name: name.trim(),
         description: description.trim(),
         category,
         campus,
+        imageId,
       });
       router.push(`/community/clubs/${clubId}`);
     } catch (err) {
@@ -131,6 +168,41 @@ function CreateClubContent() {
                 className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-border bg-background text-sm focus:ring-2 focus:ring-primary/20 outline-none resize-none"
               />
               <p className="text-[10px] text-muted-foreground mt-1 text-right">{description.length}/5,000</p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-bold mb-2">Club Image <span className="font-normal text-muted-foreground">(optional)</span></label>
+              <input
+                ref={imageRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                onChange={handleImageSelect}
+                className="hidden"
+              />
+              {imagePreview ? (
+                <div className="relative inline-block">
+                  <div
+                    className="w-32 h-32 rounded-xl bg-cover bg-center"
+                    style={{ backgroundImage: `url(${imagePreview})` }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => { setImageFile(null); setImagePreview(null); }}
+                    className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => imageRef.current?.click()}
+                  className="flex items-center gap-2 px-4 py-3 rounded-xl border border-dashed border-gray-300 dark:border-border text-sm text-muted-foreground hover:border-primary hover:text-primary transition-colors"
+                >
+                  <ImagePlus className="w-4 h-4" />
+                  Add a cover image
+                </button>
+              )}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

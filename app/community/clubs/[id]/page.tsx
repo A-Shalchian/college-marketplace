@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useState, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useQuery, useMutation, useConvexAuth } from "convex/react";
 import { api } from "@/convex/_generated/api";
@@ -20,6 +20,9 @@ import {
   Trash2,
   LogOut,
   Shield,
+  Pencil,
+  ImagePlus,
+  X,
 } from "lucide-react";
 
 function ClubDetailContent() {
@@ -40,21 +43,30 @@ function ClubDetailContent() {
   const joinClub = useMutation(api.clubs.joinClub);
   const leaveClub = useMutation(api.clubs.leaveClub);
   const deleteClub = useMutation(api.clubs.deleteClub);
+  const updateClub = useMutation(api.clubs.updateClub);
+  const createClubPost = useMutation(api.clubs.createClubPost);
+  const generateUploadUrl = useMutation(api.files.generateUploadUrl);
 
   const [isJoining, setIsJoining] = useState(false);
   const [isLeaving, setIsLeaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-  // New post form state
+  const [showEditForm, setShowEditForm] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [editDescription, setEditDescription] = useState("");
+  const [editImageFile, setEditImageFile] = useState<File | null>(null);
+  const [editImagePreview, setEditImagePreview] = useState<string | null>(null);
+  const [isEditSubmitting, setIsEditSubmitting] = useState(false);
+  const [editError, setEditError] = useState("");
+  const editImageRef = useRef<HTMLInputElement>(null);
+
   const [showPostForm, setShowPostForm] = useState(false);
   const [postTitle, setPostTitle] = useState("");
   const [postContent, setPostContent] = useState("");
   const [postCategory, setPostCategory] = useState("general");
   const [isPostSubmitting, setIsPostSubmitting] = useState(false);
   const [postError, setPostError] = useState("");
-
-  const createClubPost = useMutation(api.clubs.createClubPost);
 
   if (club === undefined) {
     return (
@@ -86,8 +98,77 @@ function ClubDetailContent() {
 
   const isCreator = currentUser && club.creatorId === currentUser._id;
   const isSiteAdmin = currentUser?.role === "admin" || currentUser?.role === "super_admin";
+  const canEdit = isCreator || isSiteAdmin;
   const canDelete = isCreator || isSiteAdmin;
   const isMember = !!membership;
+
+  const openEditForm = () => {
+    setEditName(club.name);
+    setEditDescription(club.description);
+    setEditImageFile(null);
+    setEditImagePreview(null);
+    setEditError("");
+    setShowEditForm(true);
+  };
+
+  const handleEditImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      setEditError("Image must be under 5MB");
+      return;
+    }
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+      setEditError("Only JPEG, PNG, and WebP images are allowed");
+      return;
+    }
+    setEditImageFile(file);
+    const reader = new FileReader();
+    reader.onload = () => setEditImagePreview(reader.result as string);
+    reader.readAsDataURL(file);
+    setEditError("");
+  };
+
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!currentUser || isEditSubmitting) return;
+
+    setEditError("");
+    if (editName.trim().length < 3) {
+      setEditError("Club name must be at least 3 characters");
+      return;
+    }
+    if (editDescription.trim().length < 10) {
+      setEditError("Description must be at least 10 characters");
+      return;
+    }
+
+    setIsEditSubmitting(true);
+    try {
+      let imageId: string | undefined;
+      if (editImageFile) {
+        const uploadUrl = await generateUploadUrl({ userId: currentUser._id });
+        const result = await fetch(uploadUrl, {
+          method: "POST",
+          headers: { "Content-Type": editImageFile.type },
+          body: editImageFile,
+        });
+        const { storageId } = await result.json();
+        imageId = storageId;
+      }
+
+      await updateClub({
+        clubId,
+        name: editName.trim(),
+        description: editDescription.trim(),
+        ...(imageId !== undefined && { imageId }),
+      });
+      setShowEditForm(false);
+    } catch (err) {
+      setEditError(err instanceof Error ? err.message : "Failed to update club");
+    }
+    setIsEditSubmitting(false);
+  };
 
   const handleJoin = async () => {
     setIsJoining(true);
@@ -169,7 +250,6 @@ function ClubDetailContent() {
       <Navbar />
 
       <main className="max-w-[900px] mx-auto px-4 md:px-6 py-6 md:py-8 space-y-6">
-        {/* Back button */}
         <Link
           href="/community/clubs"
           className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
@@ -177,82 +257,173 @@ function ClubDetailContent() {
           <ArrowLeft className="w-4 h-4" /> Back to Clubs
         </Link>
 
-        {/* Header Card */}
-        <div className="bg-white dark:bg-card rounded-xl border border-gray-100 dark:border-border p-6">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-2">
-                <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${getCategoryColor(club.category)}`}>
-                  {club.category}
-                </span>
-              </div>
-              <h1 className="text-2xl font-bold mb-2">{club.name}</h1>
-              <p className="text-sm text-muted-foreground mb-4 whitespace-pre-wrap">{club.description}</p>
-              <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                <span className="flex items-center gap-1">
-                  <MapPin className="w-4 h-4" /> {club.campus}
-                </span>
-                <span className="flex items-center gap-1">
-                  <Users className="w-4 h-4" /> {club.memberCount} {club.memberCount === 1 ? "member" : "members"}
-                </span>
-              </div>
-            </div>
+        {club.imageUrl && (
+          <div
+            className="w-full h-48 md:h-64 rounded-xl bg-cover bg-center"
+            style={{ backgroundImage: `url(${club.imageUrl})` }}
+          />
+        )}
 
-            {isAuthenticated && (
-              <div className="flex flex-col gap-2 shrink-0">
-                {!isMember ? (
+        <div className="bg-white dark:bg-card rounded-xl border border-gray-100 dark:border-border p-6">
+          {showEditForm ? (
+            <form onSubmit={handleEditSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-bold mb-2">Club Name</label>
+                <input
+                  type="text"
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  maxLength={100}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-border bg-background text-sm focus:ring-2 focus:ring-primary/20 outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-bold mb-2">Description</label>
+                <textarea
+                  value={editDescription}
+                  onChange={(e) => setEditDescription(e.target.value)}
+                  rows={5}
+                  maxLength={5000}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-border bg-background text-sm focus:ring-2 focus:ring-primary/20 outline-none resize-none"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-bold mb-2">Club Image</label>
+                <input
+                  ref={editImageRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  onChange={handleEditImageSelect}
+                  className="hidden"
+                />
+                {editImagePreview ? (
+                  <div className="relative inline-block">
+                    <div
+                      className="w-32 h-32 rounded-xl bg-cover bg-center"
+                      style={{ backgroundImage: `url(${editImagePreview})` }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => { setEditImageFile(null); setEditImagePreview(null); }}
+                      className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ) : (
                   <button
-                    onClick={handleJoin}
-                    disabled={isJoining}
-                    className="flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-primary/90 transition-all disabled:opacity-50"
+                    type="button"
+                    onClick={() => editImageRef.current?.click()}
+                    className="flex items-center gap-2 px-4 py-3 rounded-xl border border-dashed border-gray-300 dark:border-border text-sm text-muted-foreground hover:border-primary hover:text-primary transition-colors"
                   >
-                    {isJoining ? <Loader2 className="w-4 h-4 animate-spin" /> : <Users className="w-4 h-4" />}
-                    Join Club
+                    <ImagePlus className="w-4 h-4" />
+                    {club.imageUrl ? "Change image" : "Add image"}
                   </button>
-                ) : !isCreator ? (
-                  <button
-                    onClick={handleLeave}
-                    disabled={isLeaving}
-                    className="flex items-center gap-2 bg-gray-100 dark:bg-muted text-gray-700 dark:text-muted-foreground px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-gray-200 dark:hover:bg-border transition-all disabled:opacity-50"
-                  >
-                    {isLeaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <LogOut className="w-4 h-4" />}
-                    Leave
-                  </button>
-                ) : null}
-                {canDelete && (
-                  <>
-                    {showDeleteConfirm ? (
-                      <div className="flex gap-2">
-                        <button
-                          onClick={handleDelete}
-                          disabled={isDeleting}
-                          className="flex items-center gap-1 bg-red-500 text-white px-3 py-2 rounded-xl font-bold text-xs hover:bg-red-600 transition-all disabled:opacity-50"
-                        >
-                          {isDeleting ? <Loader2 className="w-3 h-3 animate-spin" /> : "Confirm"}
-                        </button>
-                        <button
-                          onClick={() => setShowDeleteConfirm(false)}
-                          className="px-3 py-2 rounded-xl font-bold text-xs bg-gray-100 dark:bg-muted hover:bg-gray-200 dark:hover:bg-border transition-colors"
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    ) : (
-                      <button
-                        onClick={() => setShowDeleteConfirm(true)}
-                        className="flex items-center gap-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 px-5 py-2.5 rounded-xl font-bold text-sm transition-colors"
-                      >
-                        <Trash2 className="w-4 h-4" /> Delete
-                      </button>
-                    )}
-                  </>
                 )}
               </div>
-            )}
-          </div>
+              {editError && (
+                <p className="text-red-500 text-xs font-medium">{editError}</p>
+              )}
+              <div className="flex gap-2 justify-end">
+                <button
+                  type="button"
+                  onClick={() => setShowEditForm(false)}
+                  className="px-4 py-2 rounded-xl font-bold text-sm text-muted-foreground hover:bg-gray-100 dark:hover:bg-muted transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isEditSubmitting || !editName.trim() || !editDescription.trim()}
+                  className="flex items-center gap-2 bg-primary text-white px-5 py-2 rounded-xl font-bold text-sm hover:bg-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isEditSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save Changes"}
+                </button>
+              </div>
+            </form>
+          ) : (
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${getCategoryColor(club.category)}`}>
+                    {club.category}
+                  </span>
+                </div>
+                <h1 className="text-2xl font-bold mb-2">{club.name}</h1>
+                <p className="text-sm text-muted-foreground mb-4 whitespace-pre-wrap">{club.description}</p>
+                <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                  <span className="flex items-center gap-1">
+                    <MapPin className="w-4 h-4" /> {club.campus}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Users className="w-4 h-4" /> {club.memberCount} {club.memberCount === 1 ? "member" : "members"}
+                  </span>
+                </div>
+              </div>
+
+              {isAuthenticated && (
+                <div className="flex flex-col gap-2 shrink-0">
+                  {!isMember ? (
+                    <button
+                      onClick={handleJoin}
+                      disabled={isJoining}
+                      className="flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-primary/90 transition-all disabled:opacity-50"
+                    >
+                      {isJoining ? <Loader2 className="w-4 h-4 animate-spin" /> : <Users className="w-4 h-4" />}
+                      Join Club
+                    </button>
+                  ) : !isCreator ? (
+                    <button
+                      onClick={handleLeave}
+                      disabled={isLeaving}
+                      className="flex items-center gap-2 bg-gray-100 dark:bg-muted text-gray-700 dark:text-muted-foreground px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-gray-200 dark:hover:bg-border transition-all disabled:opacity-50"
+                    >
+                      {isLeaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <LogOut className="w-4 h-4" />}
+                      Leave
+                    </button>
+                  ) : null}
+                  {canEdit && (
+                    <button
+                      onClick={openEditForm}
+                      className="flex items-center gap-2 text-muted-foreground hover:bg-gray-100 dark:hover:bg-muted px-5 py-2.5 rounded-xl font-bold text-sm transition-colors"
+                    >
+                      <Pencil className="w-4 h-4" /> Edit
+                    </button>
+                  )}
+                  {canDelete && (
+                    <>
+                      {showDeleteConfirm ? (
+                        <div className="flex gap-2">
+                          <button
+                            onClick={handleDelete}
+                            disabled={isDeleting}
+                            className="flex items-center gap-1 bg-red-500 text-white px-3 py-2 rounded-xl font-bold text-xs hover:bg-red-600 transition-all disabled:opacity-50"
+                          >
+                            {isDeleting ? <Loader2 className="w-3 h-3 animate-spin" /> : "Confirm"}
+                          </button>
+                          <button
+                            onClick={() => setShowDeleteConfirm(false)}
+                            className="px-3 py-2 rounded-xl font-bold text-xs bg-gray-100 dark:bg-muted hover:bg-gray-200 dark:hover:bg-border transition-colors"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => setShowDeleteConfirm(true)}
+                          className="flex items-center gap-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 px-5 py-2.5 rounded-xl font-bold text-sm transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4" /> Delete
+                        </button>
+                      )}
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
-        {/* Members Section */}
         <div className="bg-white dark:bg-card rounded-xl border border-gray-100 dark:border-border p-6">
           <h2 className="font-bold text-lg mb-4">Members ({club.memberCount})</h2>
           {members === undefined ? (
@@ -292,7 +463,6 @@ function ClubDetailContent() {
           )}
         </div>
 
-        {/* Club Discussions Section */}
         <div className="bg-white dark:bg-card rounded-xl border border-gray-100 dark:border-border p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-bold text-lg">Club Discussions</h2>
@@ -307,7 +477,6 @@ function ClubDetailContent() {
             )}
           </div>
 
-          {/* New Post Form */}
           {showPostForm && (
             <form onSubmit={handlePostSubmit} className="mb-6 p-4 bg-gray-50 dark:bg-muted/50 rounded-xl space-y-4">
               <div>
