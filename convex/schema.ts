@@ -56,6 +56,7 @@ export default defineSchema({
     conversationId: v.id("conversations"),
     senderId: v.id("users"),
     content: v.string(),
+    imageId: v.optional(v.string()),
     createdAt: v.number(),
   }).index("by_conversation", ["conversationId"]),
 
@@ -201,4 +202,15 @@ export default defineSchema({
   })
     .index("by_user_and_post", ["userId", "postId"])
     .index("by_user_and_reply", ["userId", "replyId"]),
+
+  contactMessages: defineTable({
+    userId: v.id("users"),
+    topic: v.string(),
+    message: v.string(),
+    status: v.string(),
+    createdAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_status", ["status"])
+    .index("by_created", ["createdAt"]),
 });

@@ -74,30 +74,32 @@ export const getSavedByUser = query({
       .query("savedListings")
       .withIndex("by_user", (q) => q.eq("userId", args.userId))
       .order("desc")
-      .collect();
+      .take(50);
 
-    const results = [];
-    for (const record of savedRecords) {
-      const listing = await ctx.db.get(record.listingId);
-      if (!listing || listing.status !== "active") continue;
+    const results = await Promise.all(
+      savedRecords.map(async (record) => {
+        const listing = await ctx.db.get(record.listingId);
+        if (!listing || listing.status !== "active") return null;
 
-      const seller = await ctx.db.get(listing.sellerId);
-      const imageUrls = await Promise.all(
-        listing.images.map(async (id) => {
-          if (id.startsWith("http")) return id;
-          return await ctx.storage.getUrl(id as Id<"_storage">);
-        })
-      );
+        const seller = await ctx.db.get(listing.sellerId);
+        let thumbnailUrl: string | null = null;
+        if (listing.images.length > 0) {
+          const firstImage = listing.images[0];
+          thumbnailUrl = firstImage.startsWith("http")
+            ? firstImage
+            : await ctx.storage.getUrl(firstImage as Id<"_storage">);
+        }
 
-      results.push({
-        ...listing,
-        seller,
-        imageUrls: imageUrls.filter((url): url is string => url !== null),
-        savedAt: record.savedAt,
-      });
-    }
+        return {
+          ...listing,
+          seller,
+          imageUrls: thumbnailUrl ? [thumbnailUrl] : [],
+          savedAt: record.savedAt,
+        };
+      })
+    );
 
-    return results;
+    return results.filter(Boolean);
   },
 });
 

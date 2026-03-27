@@ -5,7 +5,7 @@ export function Footer() {
     <footer className="bg-white dark:bg-card border-t border-gray-100 dark:border-border py-10">
       <div className="max-w-[1280px] mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-10">
         <div>
-          <h4 className="font-bold text-lg mb-4 text-primary">GBC Marketplace</h4>
+          <h4 className="font-bold text-lg mb-4">GBC Marketplace</h4>
           <p className="text-sm text-muted-foreground leading-relaxed">
             The official student-led marketplace for George Brown College. Shop safely, save money, and support your fellow students.
           </p>
@@ -14,17 +14,17 @@ export function Footer() {
           <h4 className="font-bold text-sm uppercase tracking-widest text-muted-foreground mb-4">Community</h4>
           <ul className="space-y-3">
             <li>
-              <Link href="#" className="text-sm font-medium hover:text-primary transition-colors">
+              <Link href="/safety-guidelines" className="text-sm font-medium hover:text-foreground transition-colors">
                 Safety Guidelines
               </Link>
             </li>
             <li>
-              <Link href="#" className="text-sm font-medium hover:text-primary transition-colors">
+              <Link href="/exchange-zones" className="text-sm font-medium hover:text-foreground transition-colors">
                 Exchange Zones
               </Link>
             </li>
             <li>
-              <Link href="#" className="text-sm font-medium hover:text-primary transition-colors">
+              <Link href="/terms" className="text-sm font-medium hover:text-foreground transition-colors">
                 Terms of Service
               </Link>
             </li>
@@ -34,17 +34,17 @@ export function Footer() {
           <h4 className="font-bold text-sm uppercase tracking-widest text-muted-foreground mb-4">Support</h4>
           <ul className="space-y-3">
             <li>
-              <Link href="#" className="text-sm font-medium hover:text-primary transition-colors">
+              <Link href="/help" className="text-sm font-medium hover:text-foreground transition-colors">
                 Help Centre
               </Link>
             </li>
             <li>
-              <Link href="#" className="text-sm font-medium hover:text-primary transition-colors">
+              <Link href="/report" className="text-sm font-medium hover:text-foreground transition-colors">
                 Report a Listing
               </Link>
             </li>
             <li>
-              <Link href="#" className="text-sm font-medium hover:text-primary transition-colors">
+              <Link href="/contact" className="text-sm font-medium hover:text-foreground transition-colors">
                 Contact Admin
               </Link>
             </li>

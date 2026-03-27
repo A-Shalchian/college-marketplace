@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useConvexAuth } from "convex/react";
 import { api } from "@/convex/_generated/api";
@@ -10,7 +10,10 @@ import {
   Loader2,
   ArrowLeft,
   Calendar,
+  Camera,
+  X,
 } from "lucide-react";
+import { toast } from "sonner";
 
 const categories = [
   { id: "social", label: "Social" },
@@ -32,8 +35,12 @@ function CreateEventContent() {
   const router = useRouter();
   const currentUser = useQuery(api.users.getCurrentUser);
   const createEvent = useMutation(api.events.createEvent);
+  const generateUploadUrl = useMutation(api.files.generateUploadUrl);
+  const imageInputRef = useRef<HTMLInputElement>(null);
 
   const [title, setTitle] = useState("");
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [description, setDescription] = useState("");
   const [location, setLocation] = useState("");
   const [category, setCategory] = useState("social");
@@ -45,6 +52,18 @@ function CreateEventContent() {
   const [maxAttendees, setMaxAttendees] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) { setError("Image must be under 2MB"); return; }
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) { setError("Only JPEG, PNG, and WebP images"); return; }
+    setImageFile(file);
+    const reader = new FileReader();
+    reader.onload = (ev) => setImagePreview(ev.target?.result as string);
+    reader.readAsDataURL(file);
+    e.target.value = "";
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -92,6 +111,18 @@ function CreateEventContent() {
 
     setIsSubmitting(true);
     try {
+      let imageId: string | undefined;
+      if (imageFile && currentUser) {
+        const uploadUrl = await generateUploadUrl({ userId: currentUser._id });
+        const result = await fetch(uploadUrl, {
+          method: "POST",
+          headers: { "Content-Type": imageFile.type },
+          body: imageFile,
+        });
+        const { storageId } = await result.json();
+        imageId = storageId;
+      }
+
       const eventId = await createEvent({
         title: title.trim(),
         description: description.trim(),
@@ -101,7 +132,9 @@ function CreateEventContent() {
         date: startTimestamp,
         endDate: endTimestamp,
         maxAttendees: maxAttendeesNum,
+        ...(imageId ? { imageId } : {}),
       });
+      toast.success("Event created!");
       router.push(`/community/events/${eventId}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create event");
@@ -117,7 +150,7 @@ function CreateEventContent() {
           <p className="text-gray-500">Please sign in to create an event</p>
           <Link
             href="/sign-in"
-            className="inline-block mt-4 px-6 py-2 bg-primary text-white rounded-xl font-bold"
+            className="inline-block mt-4 px-6 py-2 bg-primary text-primary-foreground rounded-xl font-bold"
           >
             Sign In
           </Link>
@@ -170,6 +203,26 @@ function CreateEventContent() {
                 className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-border bg-background text-sm focus:ring-2 focus:ring-primary/20 outline-none resize-none"
               />
               <p className="text-[10px] text-muted-foreground mt-1 text-right">{description.length}/5,000</p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-bold mb-2">Event Image <span className="font-normal text-muted-foreground">(optional)</span></label>
+              {imagePreview ? (
+                <div className="relative inline-block">
+                  <img src={imagePreview} alt="Preview" className="h-32 w-full max-w-[300px] object-cover rounded-xl border border-gray-200" />
+                  <button type="button" onClick={() => { setImageFile(null); setImagePreview(null); }} className="absolute top-2 right-2 bg-accent-coral text-white rounded-full p-1"><X className="w-3 h-3" /></button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => imageInputRef.current?.click()}
+                  className="flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-dashed border-gray-200 hover:border-primary/40 hover:bg-primary/5 transition-all text-sm text-muted-foreground w-full"
+                >
+                  <Camera className="w-5 h-5" />
+                  Add a cover image
+                </button>
+              )}
+              <input ref={imageInputRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={handleImageSelect} className="hidden" />
             </div>
 
             <div>
@@ -287,7 +340,7 @@ function CreateEventContent() {
             <button
               type="submit"
               disabled={isSubmitting || !title.trim() || !description.trim() || !location.trim() || !date || !time}
-              className="flex items-center gap-2 bg-primary text-white px-6 py-2.5 rounded-xl font-bold text-sm hover:bg-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-2 bg-primary text-primary-foreground px-6 py-2.5 rounded-xl font-bold text-sm hover:bg-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSubmitting ? (
                 <Loader2 className="w-4 h-4 animate-spin" />

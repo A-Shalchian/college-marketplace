@@ -25,11 +25,9 @@ export const getEvents = query({
   handler: async (ctx, args) => {
     let events = await ctx.db
       .query("events")
-      .withIndex("by_date")
+      .withIndex("by_status", (q) => q.eq("status", "active"))
       .order("desc")
-      .collect();
-
-    events = events.filter((e) => e.status === "active");
+      .take(100);
 
     if (args.category) {
       events = events.filter((e) => e.category === args.category);
@@ -160,6 +158,7 @@ export const createEvent = mutation({
     date: v.number(),
     endDate: v.optional(v.number()),
     maxAttendees: v.optional(v.number()),
+    imageId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const user = await getAuthenticatedUser(ctx);
@@ -206,6 +205,7 @@ export const createEvent = mutation({
       date: args.date,
       endDate: args.endDate,
       maxAttendees: args.maxAttendees,
+      ...(args.imageId ? { imageId: args.imageId } : {}),
       status: "active",
       createdAt: Date.now(),
     });

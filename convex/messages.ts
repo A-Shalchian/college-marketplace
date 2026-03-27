@@ -78,6 +78,7 @@ export const sendMessage = mutation({
     sellerId: v.optional(v.id("users")),
     senderId: v.id("users"),
     content: v.string(),
+    imageId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     await requireActiveUser(ctx, args.senderId);
@@ -137,6 +138,7 @@ export const sendMessage = mutation({
       conversationId,
       senderId: args.senderId,
       content,
+      ...(args.imageId ? { imageId: args.imageId } : {}),
       createdAt: Date.now(),
     });
 
@@ -167,7 +169,13 @@ export const getMessages = query({
     const messagesWithSenders = await Promise.all(
       messages.map(async (message) => {
         const sender = await ctx.db.get(message.senderId);
-        return { ...message, sender };
+        let imageUrl: string | null = null;
+        if (message.imageId) {
+          imageUrl = message.imageId.startsWith("http")
+            ? message.imageId
+            : await ctx.storage.getUrl(message.imageId as Id<"_storage">);
+        }
+        return { ...message, sender, imageUrl };
       })
     );
 
@@ -269,20 +277,24 @@ export const getUnreadCount = query({
 
     const allConversations = [...asBuyer, ...asSeller];
 
+    // Use lastMessageAt on conversation to check unread without querying messages table
     let count = 0;
     for (const conv of allConversations) {
-      const lastMessage = await ctx.db
-        .query("messages")
-        .withIndex("by_conversation", (q) =>
-          q.eq("conversationId", conv._id)
-        )
-        .order("desc")
-        .first();
+      const isBuyer = conv.buyerId === args.userId;
+      const lastReadAt = isBuyer ? conv.buyerLastReadAt : conv.sellerLastReadAt;
 
-      if (lastMessage && lastMessage.senderId !== args.userId) {
-        const isBuyer = conv.buyerId === args.userId;
-        const lastReadAt = isBuyer ? conv.buyerLastReadAt : conv.sellerLastReadAt;
-        if (!lastReadAt || lastMessage.createdAt > lastReadAt) {
+      // If conversation has activity after our last read, check if it was from the other person
+      if (conv.lastMessageAt && (!lastReadAt || conv.lastMessageAt > lastReadAt)) {
+        // Only fetch the single latest message to confirm sender
+        const lastMessage = await ctx.db
+          .query("messages")
+          .withIndex("by_conversation", (q) =>
+            q.eq("conversationId", conv._id)
+          )
+          .order("desc")
+          .first();
+
+        if (lastMessage && lastMessage.senderId !== args.userId) {
           count++;
         }
       }
@@ -309,13 +321,12 @@ export const getConversationById = query({
     const seller = await ctx.db.get(conversation.sellerId);
 
     let imageUrls: string[] = [];
-    if (listing) {
-      imageUrls = await Promise.all(
-        listing.images.map(async (id) => {
-          if (id.startsWith("http")) return id;
-          return await ctx.storage.getUrl(id as Id<"_storage">);
-        })
-      ).then((urls) => urls.filter(Boolean) as string[]);
+    if (listing && listing.images.length > 0) {
+      const firstImage = listing.images[0];
+      const url = firstImage.startsWith("http")
+        ? firstImage
+        : await ctx.storage.getUrl(firstImage as Id<"_storage">);
+      if (url) imageUrls = [url];
     }
 
     const sanitizeUser = (user: typeof buyer | typeof seller) => {

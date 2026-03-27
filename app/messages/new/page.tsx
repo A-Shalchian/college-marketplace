@@ -214,7 +214,7 @@ function NewConversationContent() {
                 <button
                   type="submit"
                   disabled={!message.trim() || isSending}
-                  className="bg-primary text-white p-2.5 rounded-xl flex items-center justify-center hover:bg-primary/90 shadow-md disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                  className="bg-primary text-primary-foreground p-2.5 rounded-xl flex items-center justify-center hover:bg-primary/90 shadow-md disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                 >
                   {isSending ? (
                     <Loader2 className="w-4 h-4 md:w-5 md:h-5 animate-spin" />

@@ -74,13 +74,13 @@ export const getPosts = query({
         .query("forumPosts")
         .withIndex("by_category", (q) => q.eq("category", args.category!))
         .order("desc")
-        .collect();
+        .take(100);
     } else {
       posts = await ctx.db
         .query("forumPosts")
         .withIndex("by_created")
         .order("desc")
-        .collect();
+        .take(100);
     }
 
     if (args.campus) {

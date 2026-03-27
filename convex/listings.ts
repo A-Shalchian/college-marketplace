@@ -82,7 +82,8 @@ export const getAll = query({
     })),
   },
   handler: async (ctx, args) => {
-    const paginationOpts = args.paginationOpts ?? { numItems: 50, cursor: null };
+    const raw = args.paginationOpts ?? { numItems: 50, cursor: null };
+    const paginationOpts = { ...raw, numItems: Math.min(raw.numItems, 50) };
 
     const result = await ctx.db
       .query("listings")
@@ -93,13 +94,15 @@ export const getAll = query({
     const listingsWithSellers = await Promise.all(
       result.page.map(async (listing) => {
         const seller = await ctx.db.get(listing.sellerId);
-        const imageUrls = await Promise.all(
-          listing.images.map(async (id) => {
-            if (id.startsWith("http")) return id;
-            return await ctx.storage.getUrl(id as Id<"_storage">);
-          })
-        );
-        return { ...listing, seller, imageUrls: imageUrls.filter(Boolean) as string[] };
+        // Only resolve the first image for listing cards (saves bandwidth)
+        let thumbnailUrl: string | null = null;
+        if (listing.images.length > 0) {
+          const firstImage = listing.images[0];
+          thumbnailUrl = firstImage.startsWith("http")
+            ? firstImage
+            : await ctx.storage.getUrl(firstImage as Id<"_storage">);
+        }
+        return { ...listing, seller, imageUrls: thumbnailUrl ? [thumbnailUrl] : [] };
       })
     );
 
@@ -139,13 +142,15 @@ export const getByUser = query({
 
     return await Promise.all(
       listings.map(async (listing) => {
-        const imageUrls = await Promise.all(
-          listing.images.map(async (id) => {
-            if (id.startsWith("http")) return id;
-            return await ctx.storage.getUrl(id as Id<"_storage">);
-          })
-        );
-        return { ...listing, imageUrls: imageUrls.filter(Boolean) as string[] };
+        // Only resolve the first image for listing cards (saves bandwidth)
+        let thumbnailUrl: string | null = null;
+        if (listing.images.length > 0) {
+          const firstImage = listing.images[0];
+          thumbnailUrl = firstImage.startsWith("http")
+            ? firstImage
+            : await ctx.storage.getUrl(firstImage as Id<"_storage">);
+        }
+        return { ...listing, imageUrls: thumbnailUrl ? [thumbnailUrl] : [] };
       })
     );
   },
@@ -208,6 +213,87 @@ export const deleteListing = mutation({
     await requireListingOwner(ctx, args.listingId, user._id);
 
     await ctx.db.delete(args.listingId);
+  },
+});
+
+export const search = query({
+  args: {
+    query: v.optional(v.string()),
+    category: v.optional(v.string()),
+    campus: v.optional(v.string()),
+    condition: v.optional(v.string()),
+    minPrice: v.optional(v.number()),
+    maxPrice: v.optional(v.number()),
+    sortBy: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    let listings = await ctx.db
+      .query("listings")
+      .withIndex("by_status", (q) => q.eq("status", "active"))
+      .order("desc")
+      .take(100);
+
+    if (args.category && args.category !== "all") {
+      listings = listings.filter((l) => l.category === args.category);
+    }
+    if (args.campus && args.campus !== "All Campuses") {
+      listings = listings.filter((l) => l.campus === args.campus);
+    }
+    if (args.condition) {
+      const conditions = args.condition.split(",");
+      listings = listings.filter((l) =>
+        conditions.some((c) => l.condition.toLowerCase() === c.toLowerCase())
+      );
+    }
+    if (args.minPrice !== undefined) {
+      listings = listings.filter((l) => l.price >= args.minPrice!);
+    }
+    if (args.maxPrice !== undefined) {
+      listings = listings.filter((l) => l.price <= args.maxPrice!);
+    }
+    if (args.query) {
+      const q = args.query.toLowerCase();
+      listings = listings.filter(
+        (l) => l.title.toLowerCase().includes(q) || l.description.toLowerCase().includes(q)
+      );
+    }
+
+    if (args.sortBy === "price_low") listings.sort((a, b) => a.price - b.price);
+    else if (args.sortBy === "price_high") listings.sort((a, b) => b.price - a.price);
+    else if (args.sortBy === "oldest") listings.sort((a, b) => a.createdAt - b.createdAt);
+
+    const results = await Promise.all(
+      listings.map(async (listing) => {
+        const seller = await ctx.db.get(listing.sellerId);
+        let thumbnailUrl: string | null = null;
+        if (listing.images.length > 0) {
+          const firstImage = listing.images[0];
+          thumbnailUrl = firstImage.startsWith("http")
+            ? firstImage
+            : await ctx.storage.getUrl(firstImage as Id<"_storage">);
+        }
+        return { ...listing, seller, imageUrls: thumbnailUrl ? [thumbnailUrl] : [] };
+      })
+    );
+
+    return results;
+  },
+});
+
+export const getSellerStats = query({
+  args: { sellerId: v.id("users") },
+  handler: async (ctx, args) => {
+    const active = await ctx.db
+      .query("listings")
+      .withIndex("by_seller", (q) => q.eq("sellerId", args.sellerId))
+      .filter((q) => q.eq(q.field("status"), "active"))
+      .take(100);
+    const sold = await ctx.db
+      .query("listings")
+      .withIndex("by_seller", (q) => q.eq("sellerId", args.sellerId))
+      .filter((q) => q.eq(q.field("status"), "sold"))
+      .take(100);
+    return { activeListings: active.length, soldListings: sold.length };
   },
 });
 

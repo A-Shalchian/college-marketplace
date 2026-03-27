@@ -114,8 +114,8 @@ function ClubDetailContent() {
   const handleEditImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 5 * 1024 * 1024) {
-      setEditError("Image must be under 5MB");
+    if (file.size > 2 * 1024 * 1024) {
+      setEditError("Image must be under 2MB");
       return;
     }
     if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
@@ -335,7 +335,7 @@ function ClubDetailContent() {
                 <button
                   type="submit"
                   disabled={isEditSubmitting || !editName.trim() || !editDescription.trim()}
-                  className="flex items-center gap-2 bg-primary text-white px-5 py-2 rounded-xl font-bold text-sm hover:bg-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex items-center gap-2 bg-primary text-primary-foreground px-5 py-2 rounded-xl font-bold text-sm hover:bg-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isEditSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save Changes"}
                 </button>
@@ -367,7 +367,7 @@ function ClubDetailContent() {
                     <button
                       onClick={handleJoin}
                       disabled={isJoining}
-                      className="flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-primary/90 transition-all disabled:opacity-50"
+                      className="flex items-center gap-2 bg-primary text-primary-foreground px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-primary/90 transition-all disabled:opacity-50"
                     >
                       {isJoining ? <Loader2 className="w-4 h-4 animate-spin" /> : <Users className="w-4 h-4" />}
                       Join Club
@@ -469,7 +469,7 @@ function ClubDetailContent() {
             {isMember && (
               <button
                 onClick={() => setShowPostForm(!showPostForm)}
-                className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-xl font-bold text-sm hover:bg-primary/90 transition-all"
+                className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-xl font-bold text-sm hover:bg-primary/90 transition-all"
               >
                 <MessageSquareText className="w-4 h-4" />
                 New Post
@@ -525,7 +525,7 @@ function ClubDetailContent() {
                 <button
                   type="submit"
                   disabled={isPostSubmitting || !postTitle.trim() || !postContent.trim()}
-                  className="flex items-center gap-2 bg-primary text-white px-5 py-2 rounded-xl font-bold text-sm hover:bg-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex items-center gap-2 bg-primary text-primary-foreground px-5 py-2 rounded-xl font-bold text-sm hover:bg-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isPostSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Post"}
                 </button>

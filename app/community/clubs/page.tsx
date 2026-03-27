@@ -83,7 +83,7 @@ function ClubsContent() {
           {isAuthenticated && (
             <Link
               href="/community/clubs/create"
-              className="flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-primary/90 transition-all"
+              className="flex items-center gap-2 bg-primary text-primary-foreground px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-primary/90 transition-all"
             >
               Create Club
             </Link>
@@ -108,7 +108,7 @@ function ClubsContent() {
               onClick={() => setSelectedCategory(cat.id)}
               className={`px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-colors ${
                 selectedCategory === cat.id
-                  ? "bg-primary text-white"
+                  ? "bg-primary text-primary-foreground"
                   : "bg-gray-100 dark:bg-muted text-gray-600 dark:text-muted-foreground hover:bg-gray-200 dark:hover:bg-border"
               }`}
             >
@@ -182,7 +182,7 @@ function ClubsContent() {
             {isAuthenticated && (
               <Link
                 href="/community/clubs/create"
-                className="inline-block mt-4 px-6 py-2 bg-primary text-white rounded-xl font-bold text-sm hover:bg-primary/90 transition-colors"
+                className="inline-block mt-4 px-6 py-2 bg-primary text-primary-foreground rounded-xl font-bold text-sm hover:bg-primary/90 transition-colors"
               >
                 Create a Club
               </Link>

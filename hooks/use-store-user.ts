@@ -1,15 +1,22 @@
 import { useUser } from "@clerk/nextjs";
 import { useConvexAuth, useMutation } from "convex/react";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { api } from "@/convex/_generated/api";
 
 export function useStoreUser() {
   const { isAuthenticated } = useConvexAuth();
   const { user } = useUser();
   const storeUser = useMutation(api.users.store);
+  const hasSynced = useRef(false);
 
   useEffect(() => {
-    if (!isAuthenticated || !user) return;
+    if (!isAuthenticated || !user) {
+      hasSynced.current = false;
+      return;
+    }
+    if (hasSynced.current) return;
+    hasSynced.current = true;
     storeUser({}).catch(console.error);
-  }, [isAuthenticated, user?.id, storeUser]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, user?.id]);
 }

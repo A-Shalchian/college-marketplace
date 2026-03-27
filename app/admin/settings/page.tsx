@@ -106,7 +106,7 @@ export default function AdminSettings() {
           <button
             onClick={handleSave}
             disabled={saving}
-            className="h-11 px-6 bg-primary text-white rounded-xl font-bold flex items-center gap-2 hover:bg-primary/90 transition-colors disabled:opacity-50"
+            className="h-11 px-6 bg-primary text-primary-foreground rounded-xl font-bold flex items-center gap-2 hover:bg-primary/90 transition-colors disabled:opacity-50"
           >
             {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
             Save Changes
@@ -155,7 +155,7 @@ export default function AdminSettings() {
                     onClick={() => setActiveCategory(cat.id)}
                     className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${
                       activeCategory === cat.id
-                        ? "bg-primary text-white"
+                        ? "bg-primary text-primary-foreground"
                         : "hover:bg-gray-50 dark:hover:bg-muted"
                     }`}
                   >
@@ -203,7 +203,7 @@ export default function AdminSettings() {
                 <button
                   onClick={handleAddKeyword}
                   disabled={!newKeyword.trim()}
-                  className="h-11 px-4 bg-primary text-white rounded-xl font-bold flex items-center gap-2 hover:bg-primary/90 transition-colors disabled:opacity-50"
+                  className="h-11 px-4 bg-primary text-primary-foreground rounded-xl font-bold flex items-center gap-2 hover:bg-primary/90 transition-colors disabled:opacity-50"
                 >
                   <Plus className="w-5 h-5" />
                   Add

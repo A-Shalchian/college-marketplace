@@ -78,7 +78,7 @@ function CreatePostContent() {
           <p className="text-gray-500">Please sign in to create a post</p>
           <Link
             href="/sign-in"
-            className="inline-block mt-4 px-6 py-2 bg-primary text-white rounded-xl font-bold"
+            className="inline-block mt-4 px-6 py-2 bg-primary text-primary-foreground rounded-xl font-bold"
           >
             Sign In
           </Link>
@@ -182,7 +182,7 @@ function CreatePostContent() {
             <button
               type="submit"
               disabled={isSubmitting || !title.trim() || !content.trim()}
-              className="flex items-center gap-2 bg-primary text-white px-6 py-2.5 rounded-xl font-bold text-sm hover:bg-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-2 bg-primary text-primary-foreground px-6 py-2.5 rounded-xl font-bold text-sm hover:bg-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSubmitting ? (
                 <Loader2 className="w-4 h-4 animate-spin" />

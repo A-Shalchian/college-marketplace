@@ -19,6 +19,8 @@ export const RATE_LIMITS = {
   updateSettings: { windowMs: 60 * 1000, maxRequests: 5 },
 
   updateUser: { windowMs: 60 * 1000, maxRequests: 10 },
+
+  contactMessage: { windowMs: 60 * 60 * 1000, maxRequests: 3 },
 } as const;
 
 export type RateLimitAction = keyof typeof RATE_LIMITS;
@@ -247,7 +249,7 @@ export const VALIDATION = {
   description: { minLength: 10, maxLength: 5000 },
   price: { min: 0, max: 100000 },
   images: { maxCount: 10 },
-  imageSize: { maxBytes: 5 * 1024 * 1024 },
+  imageSize: { maxBytes: 2 * 1024 * 1024 },
   imageDimensions: { maxWidth: 4096, maxHeight: 4096 },
 
   messageContent: { minLength: 1, maxLength: 2000 },

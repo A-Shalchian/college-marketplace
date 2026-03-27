@@ -221,7 +221,7 @@ function EventDetailContent() {
                       <button
                         onClick={handleRsvp}
                         disabled={isRsvping || isFull}
-                        className="flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-primary/90 transition-all disabled:opacity-50"
+                        className="flex items-center gap-2 bg-primary text-primary-foreground px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-primary/90 transition-all disabled:opacity-50"
                       >
                         {isRsvping ? (
                           <Loader2 className="w-4 h-4 animate-spin" />

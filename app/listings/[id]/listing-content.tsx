@@ -24,8 +24,11 @@ import {
   CheckCircle,
   Pencil,
   BadgeCheck,
+  Flag,
+  ShoppingBag,
 } from "lucide-react";
 import { useSaveListing } from "@/hooks/use-save-listing";
+import { toast } from "sonner";
 
 const campusMapUrls: Record<string, string> = {
   "St. James Campus":
@@ -54,6 +57,10 @@ export function ListingContent({
       : "skip"
   );
   const updateStatus = useMutation(api.listings.updateStatus);
+  const sellerStats = useQuery(
+    api.listings.getSellerStats,
+    listing?.sellerId ? { sellerId: listing.sellerId } : "skip"
+  );
 
   const { isSaved, isToggling, canSave, toggleSave } = useSaveListing({
     listingId: listing?._id as Id<"listings">,
@@ -254,7 +261,7 @@ export function ListingContent({
                     {listing.condition}
                   </div>
                   {listing.status === "active" && (
-                    <div className="px-3 py-1 rounded-full bg-accent-mint/10 text-accent-mint text-xs font-bold uppercase tracking-wide flex items-center gap-1">
+                    <div className="px-3 py-1 rounded-full bg-muted text-foreground text-xs font-bold uppercase tracking-wide flex items-center gap-1">
                       <BadgeCheck className="w-3 h-3" /> Available
                     </div>
                   )}
@@ -277,7 +284,7 @@ export function ListingContent({
                     {isAuthenticated ? (
                       <button
                         onClick={handleContactSeller}
-                        className="w-full py-3 md:py-4 bg-primary text-white rounded-xl font-bold text-base md:text-lg hover:bg-primary/90 transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary/20"
+                        className="w-full py-3 md:py-4 bg-primary text-primary-foreground rounded-xl font-bold text-base md:text-lg hover:bg-primary/90 transition-all flex items-center justify-center gap-2 shadow-sm"
                       >
                         <MessageSquare className="w-5 h-5" />
                         Message Seller
@@ -285,7 +292,7 @@ export function ListingContent({
                     ) : (
                       <Link
                         href="/sign-in"
-                        className="w-full py-3 md:py-4 bg-primary text-white rounded-xl font-bold text-base md:text-lg hover:bg-primary/90 transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary/20"
+                        className="w-full py-3 md:py-4 bg-primary text-primary-foreground rounded-xl font-bold text-base md:text-lg hover:bg-primary/90 transition-all flex items-center justify-center gap-2 shadow-sm"
                       >
                         Sign in to Message
                       </Link>
@@ -312,14 +319,14 @@ export function ListingContent({
                     {listing.status === "active" ? (
                       <>
                         <button
-                          onClick={() =>
-                            currentUser &&
-                            updateStatus({
-                              listingId: listing._id,
-                              status: "sold",
-                            })
-                          }
-                          className="w-full py-3 md:py-4 bg-accent-mint text-white rounded-xl font-bold hover:bg-accent-mint/90 transition-all flex items-center justify-center gap-2"
+                          onClick={async () => {
+                            if (!currentUser) return;
+                            try {
+                              await updateStatus({ listingId: listing._id, status: "sold" });
+                              toast.success("Listing marked as sold!");
+                            } catch { toast.error("Failed to update listing"); }
+                          }}
+                          className="w-full py-3 md:py-4 bg-foreground text-background rounded-xl font-bold hover:bg-foreground/90 transition-all flex items-center justify-center gap-2"
                         >
                           <CheckCircle className="w-5 h-5" />
                           Mark as Sold
@@ -333,7 +340,7 @@ export function ListingContent({
                         </Link>
                       </>
                     ) : (
-                      <div className="p-4 bg-accent-mint/10 rounded-xl text-center text-accent-mint font-bold">
+                      <div className="p-4 bg-muted rounded-xl text-center text-muted-foreground font-bold">
                         This item has been sold
                       </div>
                     )}
@@ -363,13 +370,13 @@ export function ListingContent({
                       {listing.seller?.name}
                     </h5>
                     <p className="text-sm text-gray-500">GBC Student</p>
-                    <div className="flex items-center gap-1 mt-1">
-                      <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-                      <span className="text-sm font-bold">5.0</span>
-                      <span className="text-xs text-gray-400">
-                        (New seller)
-                      </span>
-                    </div>
+                    {sellerStats && (
+                      <div className="flex items-center gap-2 mt-1 text-xs text-gray-500">
+                        <span className="font-semibold">{sellerStats.activeListings} active</span>
+                        <span className="text-gray-300">·</span>
+                        <span className="font-semibold">{sellerStats.soldListings} sold</span>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -379,8 +386,8 @@ export function ListingContent({
                     Member Since {sellerJoinDate}
                   </div>
                   <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-50 text-xs font-medium">
-                    <Zap className="w-4 h-4 text-gray-400" />
-                    Usually responds quickly
+                    <ShoppingBag className="w-4 h-4 text-gray-400" />
+                    {sellerStats ? `${sellerStats.activeListings + sellerStats.soldListings} listings` : "..."}
                   </div>
                 </div>
 
@@ -402,6 +409,16 @@ export function ListingContent({
                   Centre. GBC Safe Zones are recommended for all transactions.
                 </div>
               </div>
+
+              {!isOwner && isAuthenticated && (
+                <Link
+                  href={`/report?listing=${listing._id}`}
+                  className="flex items-center justify-center gap-2 text-sm text-muted-foreground hover:text-red-500 transition-colors py-2"
+                >
+                  <Flag className="w-4 h-4" />
+                  Report this listing
+                </Link>
+              )}
             </div>
           </div>
         </div>

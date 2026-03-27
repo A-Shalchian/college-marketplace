@@ -37,26 +37,51 @@ export const getStats = query({
     if (!admin) return null;
     await requireAdmin(ctx, admin._id);
 
-    const users = await ctx.db.query("users").collect();
-    const listings = await ctx.db.query("listings").collect();
-    const reports = await ctx.db.query("reports").collect();
+    // Use targeted indexed queries instead of loading entire tables
+    const [
+      activeListings,
+      flaggedListings,
+      rejectedListings,
+      pendingReports,
+      resolvedReports,
+      bannedUsers,
+    ] = await Promise.all([
+      ctx.db.query("listings").withIndex("by_status", (q) => q.eq("status", "active")).collect(),
+      ctx.db.query("listings").withIndex("by_moderation_status", (q) => q.eq("moderationStatus", "flagged")).collect(),
+      ctx.db.query("listings").withIndex("by_status", (q) => q.eq("status", "rejected")).collect(),
+      ctx.db.query("reports").withIndex("by_status", (q) => q.eq("status", "pending")).collect(),
+      ctx.db.query("reports").withIndex("by_status", (q) => q.eq("status", "resolved")).collect(),
+      ctx.db.query("users").withIndex("by_role").filter((q) => q.eq(q.field("isBanned"), true)).collect(),
+    ]);
 
+    // Only load recent users for the time-based stats (much smaller set)
     const now = Date.now();
-    const dayAgo = now - 24 * 60 * 60 * 1000;
     const weekAgo = now - 7 * 24 * 60 * 60 * 1000;
+    const dayAgo = now - 24 * 60 * 60 * 1000;
+    const recentUsers = await ctx.db
+      .query("users")
+      .order("desc")
+      .filter((q) => q.gte(q.field("createdAt"), weekAgo))
+      .collect();
+
+    // Lightweight total count — take(500) is a reasonable cap
+    const allUsers = await ctx.db.query("users").take(500);
+
+    const totalListings = activeListings.length + flaggedListings.length + rejectedListings.length;
+    const totalReports = pendingReports.length + resolvedReports.length;
 
     return {
-      totalUsers: users.length,
-      newUsersToday: users.filter((u) => (u.createdAt ?? 0) > dayAgo).length,
-      newUsersThisWeek: users.filter((u) => (u.createdAt ?? 0) > weekAgo).length,
-      bannedUsers: users.filter((u) => u.isBanned).length,
-      totalListings: listings.length,
-      activeListings: listings.filter((l) => l.status === "active").length,
-      pendingReview: listings.filter((l) => l.moderationStatus === "flagged").length,
-      rejectedListings: listings.filter((l) => l.status === "rejected").length,
-      totalReports: reports.length,
-      pendingReports: reports.filter((r) => r.status === "pending").length,
-      resolvedReports: reports.filter((r) => r.status === "resolved").length,
+      totalUsers: allUsers.length,
+      newUsersToday: recentUsers.filter((u) => (u.createdAt ?? 0) > dayAgo).length,
+      newUsersThisWeek: recentUsers.length,
+      bannedUsers: bannedUsers.length,
+      totalListings,
+      activeListings: activeListings.length,
+      pendingReview: flaggedListings.length,
+      rejectedListings: rejectedListings.length,
+      totalReports,
+      pendingReports: pendingReports.length,
+      resolvedReports: resolvedReports.length,
     };
   },
 });
@@ -70,17 +95,19 @@ export const getAllUsers = query({
     if (!admin) return null;
     await requireAdmin(ctx, admin._id);
 
-    const users = await ctx.db.query("users").order("desc").take(200);
+    const users = await ctx.db.query("users").order("desc").take(100);
     const usersWithListingCount = await Promise.all(
       users.map(async (user) => {
-        const listings = await ctx.db
+        // Only count active listings using index, take(200) instead of collect() to cap
+        const activeListings = await ctx.db
           .query("listings")
           .withIndex("by_seller", (q) => q.eq("sellerId", user._id))
-          .collect();
+          .filter((q) => q.eq(q.field("status"), "active"))
+          .take(200);
         return {
           ...user,
-          listingCount: listings.length,
-          activeListingCount: listings.filter((l) => l.status === "active").length,
+          listingCount: activeListings.length,
+          activeListingCount: activeListings.length,
         };
       })
     );
@@ -101,13 +128,14 @@ export const getAllListings = query({
     const listingsWithSellers = await Promise.all(
       listings.map(async (listing) => {
         const seller = await ctx.db.get(listing.sellerId);
-        const imageUrls = await Promise.all(
-          listing.images.map(async (id) => {
-            if (id.startsWith("http")) return id;
-            return await ctx.storage.getUrl(id as Id<"_storage">);
-          })
-        );
-        return { ...listing, seller, imageUrls: imageUrls.filter(Boolean) as string[] };
+        let thumbnailUrl: string | null = null;
+        if (listing.images.length > 0) {
+          const firstImage = listing.images[0];
+          thumbnailUrl = firstImage.startsWith("http")
+            ? firstImage
+            : await ctx.storage.getUrl(firstImage as Id<"_storage">);
+        }
+        return { ...listing, seller, imageUrls: thumbnailUrl ? [thumbnailUrl] : [] };
       })
     );
     return listingsWithSellers;
@@ -131,13 +159,14 @@ export const getFlaggedListings = query({
     const listingsWithSellers = await Promise.all(
       listings.map(async (listing) => {
         const seller = await ctx.db.get(listing.sellerId);
-        const imageUrls = await Promise.all(
-          listing.images.map(async (id) => {
-            if (id.startsWith("http")) return id;
-            return await ctx.storage.getUrl(id as Id<"_storage">);
-          })
-        );
-        return { ...listing, seller, imageUrls: imageUrls.filter(Boolean) as string[] };
+        let thumbnailUrl: string | null = null;
+        if (listing.images.length > 0) {
+          const firstImage = listing.images[0];
+          thumbnailUrl = firstImage.startsWith("http")
+            ? firstImage
+            : await ctx.storage.getUrl(firstImage as Id<"_storage">);
+        }
+        return { ...listing, seller, imageUrls: thumbnailUrl ? [thumbnailUrl] : [] };
       })
     );
     return listingsWithSellers;

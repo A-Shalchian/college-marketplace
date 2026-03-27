@@ -23,12 +23,47 @@ import {
   X,
 } from "lucide-react";
 
+const MAX_IMAGE_SIZE = 2 * 1024 * 1024;
+const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
+
+async function compressImage(file: File): Promise<File> {
+  if (file.size <= MAX_IMAGE_SIZE) return file;
+  return new Promise((resolve) => {
+    const img = new window.Image();
+    img.onload = () => {
+      URL.revokeObjectURL(img.src);
+      const canvas = document.createElement("canvas");
+      let { width, height } = img;
+      if (width > 1200) { height = Math.round((height * 1200) / width); width = 1200; }
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) { resolve(file); return; }
+      ctx.drawImage(img, 0, 0, width, height);
+      canvas.toBlob(
+        (blob) => {
+          if (!blob || blob.size >= file.size) { resolve(file); return; }
+          resolve(new File([blob], file.name, { type: "image/jpeg", lastModified: Date.now() }));
+        },
+        "image/jpeg",
+        0.8
+      );
+    };
+    img.onerror = () => resolve(file);
+    img.src = URL.createObjectURL(file);
+  });
+}
+
 function ConversationContent({ id }: { id: string }) {
   const { isAuthenticated, isLoading } = useConvexAuth();
   const router = useRouter();
   const [message, setMessage] = useState("");
   const [showSafetyTip, setShowSafetyTip] = useState(true);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [isSendingImage, setIsSendingImage] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
 
   const currentUser = useQuery(api.users.getCurrentUser);
   const conversation = useQuery(
@@ -46,6 +81,7 @@ function ConversationContent({ id }: { id: string }) {
   const sendMessage = useMutation(api.messages.sendMessage);
   const markAsRead = useMutation(api.messages.markAsRead);
   const updateStatus = useMutation(api.listings.updateStatus);
+  const generateUploadUrl = useMutation(api.files.generateUploadUrl);
 
   const handleMarkAsSold = async () => {
     if (!conversation?.listing?._id || !currentUser) return;
@@ -68,17 +104,54 @@ function ConversationContent({ id }: { id: string }) {
     }
   }, [currentUser, conversation, messages?.length]);
 
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!ALLOWED_TYPES.includes(file.type)) { alert("Only JPEG, PNG, and WebP images"); return; }
+    if (file.size > 10 * 1024 * 1024) { alert("Image too large (max 10MB before compression)"); return; }
+    setImageFile(file);
+    const reader = new FileReader();
+    reader.onload = (ev) => setImagePreview(ev.target?.result as string);
+    reader.readAsDataURL(file);
+    e.target.value = "";
+  };
+
+  const clearImage = () => { setImageFile(null); setImagePreview(null); };
+
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!message.trim() || !currentUser) return;
+    if ((!message.trim() && !imageFile) || !currentUser) return;
+
+    let imageId: string | undefined;
+    if (imageFile) {
+      setIsSendingImage(true);
+      try {
+        const compressed = await compressImage(imageFile);
+        const uploadUrl = await generateUploadUrl({ userId: currentUser._id });
+        const result = await fetch(uploadUrl, {
+          method: "POST",
+          headers: { "Content-Type": compressed.type },
+          body: compressed,
+        });
+        const { storageId } = await result.json();
+        imageId = storageId;
+      } catch {
+        alert("Failed to upload image");
+        setIsSendingImage(false);
+        return;
+      }
+    }
 
     await sendMessage({
       conversationId: id as Id<"conversations">,
       senderId: currentUser._id,
-      content: message.trim(),
+      content: message.trim() || (imageId ? "Sent an image" : ""),
+      ...(imageId ? { imageId } : {}),
     });
 
     setMessage("");
+    clearImage();
+    setIsSendingImage(false);
   };
 
   if (conversation === undefined || messages === undefined) {
@@ -175,7 +248,7 @@ function ConversationContent({ id }: { id: string }) {
               />
             </div>
             <div className="flex gap-2 overflow-x-auto pb-1">
-              <button className="px-4 py-1.5 bg-primary text-white rounded-full text-xs font-bold whitespace-nowrap">
+              <button className="px-4 py-1.5 bg-primary text-primary-foreground rounded-full text-xs font-bold whitespace-nowrap">
                 All
               </button>
               <button className="px-4 py-1.5 bg-gray-100 text-gray-600 rounded-full text-xs font-bold whitespace-nowrap hover:bg-gray-200 transition-colors">
@@ -299,7 +372,7 @@ function ConversationContent({ id }: { id: string }) {
               {isSeller && conversation.listing?.status === "active" && (
                 <button
                   onClick={handleMarkAsSold}
-                  className="flex items-center gap-2 px-3 md:px-4 py-2 bg-primary text-white rounded-xl text-sm font-bold hover:bg-primary/90 transition-colors"
+                  className="flex items-center gap-2 px-3 md:px-4 py-2 bg-primary text-primary-foreground rounded-xl text-sm font-bold hover:bg-primary/90 transition-colors"
                 >
                   Mark as Sold
                 </button>
@@ -345,15 +418,36 @@ function ConversationContent({ id }: { id: string }) {
                     </div>
                   )}
                   <div className={`space-y-1 ${isOwn ? "items-end flex flex-col" : ""}`}>
-                    <div
-                      className={`px-4 py-3 rounded-2xl ${
-                        isOwn
-                          ? "bg-primary text-white rounded-br-sm"
-                          : "bg-gray-100 rounded-bl-sm"
-                      }`}
-                    >
-                      <p className="text-sm leading-relaxed">{msg.content}</p>
-                    </div>
+                    {msg.imageUrl && (
+                      <img
+                        src={msg.imageUrl}
+                        alt="Shared image"
+                        loading="lazy"
+                        className="max-w-[240px] max-h-[240px] rounded-2xl object-cover border border-gray-200"
+                      />
+                    )}
+                    {msg.content && msg.content !== "Sent an image" && (
+                      <div
+                        className={`px-4 py-3 rounded-2xl ${
+                          isOwn
+                            ? "bg-primary text-primary-foreground rounded-br-sm"
+                            : "bg-gray-100 rounded-bl-sm"
+                        }`}
+                      >
+                        <p className="text-sm leading-relaxed">{msg.content}</p>
+                      </div>
+                    )}
+                    {msg.content === "Sent an image" && !msg.imageUrl && (
+                      <div
+                        className={`px-4 py-3 rounded-2xl ${
+                          isOwn
+                            ? "bg-primary text-primary-foreground rounded-br-sm"
+                            : "bg-gray-100 rounded-bl-sm"
+                        }`}
+                      >
+                        <p className="text-sm leading-relaxed italic">Sent an image</p>
+                      </div>
+                    )}
                     <div className={`flex items-center gap-1 ${isOwn ? "flex-row-reverse" : ""}`}>
                       {isOwn && (
                         <CheckCheck className="w-3 h-3 text-primary" />
@@ -392,6 +486,12 @@ function ConversationContent({ id }: { id: string }) {
           )}
 
           <div className="p-4 md:p-6 bg-white border-t border-gray-200">
+            {imagePreview && (
+              <div className="mb-3 relative inline-block">
+                <img src={imagePreview} alt="Preview" className="h-20 w-20 object-cover rounded-xl border border-gray-200" />
+                <button type="button" onClick={clearImage} className="absolute -top-2 -right-2 bg-accent-coral text-white rounded-full p-0.5"><X className="w-3 h-3" /></button>
+              </div>
+            )}
             <form onSubmit={handleSend}>
               <div className="flex items-center gap-2 md:gap-3 bg-background p-2 rounded-2xl border-2 border-transparent focus-within:border-primary/30 transition-all">
                 <button
@@ -402,10 +502,18 @@ function ConversationContent({ id }: { id: string }) {
                 </button>
                 <button
                   type="button"
+                  onClick={() => imageInputRef.current?.click()}
                   className="p-2 text-gray-400 hover:text-primary transition-colors"
                 >
                   <ImageIcon className="w-5 h-5 md:w-6 md:h-6" />
                 </button>
+                <input
+                  ref={imageInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  onChange={handleImageSelect}
+                  className="hidden"
+                />
                 <input
                   type="text"
                   value={message}
@@ -415,10 +523,10 @@ function ConversationContent({ id }: { id: string }) {
                 />
                 <button
                   type="submit"
-                  disabled={!message.trim()}
-                  className="bg-primary text-white p-2.5 rounded-xl flex items-center justify-center hover:bg-primary/90 shadow-md disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                  disabled={(!message.trim() && !imageFile) || isSendingImage}
+                  className="bg-primary text-primary-foreground p-2.5 rounded-xl flex items-center justify-center hover:bg-primary/90 shadow-md disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                 >
-                  <Send className="w-4 h-4 md:w-5 md:h-5" />
+                  {isSendingImage ? <Loader2 className="w-4 h-4 md:w-5 md:h-5 animate-spin" /> : <Send className="w-4 h-4 md:w-5 md:h-5" />}
                 </button>
               </div>
             </form>

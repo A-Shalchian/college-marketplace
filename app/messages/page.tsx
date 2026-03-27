@@ -48,7 +48,7 @@ function MessagesContent() {
           <p className="text-gray-500">Please sign in to view messages</p>
           <Link
             href="/sign-in"
-            className="inline-block mt-4 px-6 py-2 bg-primary text-white rounded-xl font-bold"
+            className="inline-block mt-4 px-6 py-2 bg-primary text-primary-foreground rounded-xl font-bold"
           >
             Sign In
           </Link>
@@ -93,7 +93,7 @@ function MessagesContent() {
                 onClick={() => setFilter("all")}
                 className={`px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-colors ${
                   filter === "all"
-                    ? "bg-primary text-white"
+                    ? "bg-primary text-primary-foreground"
                     : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                 }`}
               >
@@ -103,7 +103,7 @@ function MessagesContent() {
                 onClick={() => setFilter("buying")}
                 className={`px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-colors ${
                   filter === "buying"
-                    ? "bg-primary text-white"
+                    ? "bg-primary text-primary-foreground"
                     : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                 }`}
               >
@@ -113,7 +113,7 @@ function MessagesContent() {
                 onClick={() => setFilter("selling")}
                 className={`px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-colors ${
                   filter === "selling"
-                    ? "bg-primary text-white"
+                    ? "bg-primary text-primary-foreground"
                     : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                 }`}
               >

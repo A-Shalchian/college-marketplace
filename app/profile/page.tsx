@@ -25,6 +25,8 @@ import {
   Moon,
   Sun,
   Heart,
+  Pencil,
+  Check,
 } from "lucide-react";
 import { Id } from "@/convex/_generated/dataModel";
 import { useTheme } from "@/components/providers/theme-provider";
@@ -81,6 +83,11 @@ function ProfileContent() {
   const deleteListing = useMutation(api.listings.deleteListing);
   const updateStatus = useMutation(api.listings.updateStatus);
   const updateDefaultCampus = useMutation(api.users.updateDefaultCampus);
+  const updateProfile = useMutation(api.users.updateProfile);
+
+  const [editingName, setEditingName] = useState(false);
+  const [nameInput, setNameInput] = useState("");
+  const [savingName, setSavingName] = useState(false);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -97,6 +104,28 @@ function ProfileContent() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  const handleStartEditName = () => {
+    setNameInput(currentUser?.name || "");
+    setEditingName(true);
+  };
+
+  const handleSaveName = async () => {
+    if (!currentUser || !nameInput.trim()) return;
+    if (nameInput.trim() === currentUser.name) {
+      setEditingName(false);
+      return;
+    }
+    setSavingName(true);
+    try {
+      await updateProfile({ userId: currentUser._id, name: nameInput.trim() });
+      setEditingName(false);
+    } catch (err) {
+      console.error("Failed to update name:", err);
+    } finally {
+      setSavingName(false);
+    }
+  };
 
   const handleCampusChange = async (campus: string) => {
     if (!currentUser) return;
@@ -198,16 +227,55 @@ function ProfileContent() {
                     <User className="w-12 h-12 text-gray-400" />
                   </div>
                 )}
-                <div className="absolute bottom-1 right-1 bg-accent-mint text-white p-1.5 rounded-full shadow-lg flex items-center justify-center">
+                <div className="absolute bottom-1 right-1 bg-foreground text-background p-1.5 rounded-full shadow-lg flex items-center justify-center">
                   <BadgeCheck className="w-4 h-4" />
                 </div>
               </div>
 
               <div className="text-center md:text-left">
                 <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mb-2">
-                  <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight">
-                    {currentUser?.name}
-                  </h1>
+                  {editingName ? (
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={nameInput}
+                        onChange={(e) => setNameInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") handleSaveName();
+                          if (e.key === "Escape") setEditingName(false);
+                        }}
+                        autoFocus
+                        className="text-2xl md:text-3xl font-extrabold tracking-tight bg-transparent border-b-2 border-primary outline-none w-auto min-w-[120px]"
+                        style={{ width: `${Math.max(nameInput.length, 8)}ch` }}
+                      />
+                      <button
+                        onClick={handleSaveName}
+                        disabled={savingName}
+                        className="p-1.5 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+                      >
+                        {savingName ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                      </button>
+                      <button
+                        onClick={() => setEditingName(false)}
+                        className="p-1.5 rounded-lg bg-gray-100 dark:bg-muted hover:bg-gray-200 dark:hover:bg-border transition-colors"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 group">
+                      <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight">
+                        {currentUser?.name}
+                      </h1>
+                      <button
+                        onClick={handleStartEditName}
+                        className="p-1.5 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-gray-100 dark:hover:bg-muted transition-all"
+                        title="Edit name"
+                      >
+                        <Pencil className="w-4 h-4 text-muted-foreground" />
+                      </button>
+                    </div>
+                  )}
                   <span className="px-3 py-1 bg-primary/10 text-primary text-xs font-bold rounded-full uppercase tracking-wider">
                     GBC Student
                   </span>
@@ -221,7 +289,7 @@ function ProfileContent() {
                     <span className="text-xs font-semibold">Joined {joinDate}</span>
                   </div>
                   <div className="flex items-center gap-1.5 bg-gray-50 dark:bg-muted px-3 py-1.5 rounded-lg border border-gray-100 dark:border-border">
-                    <MapPin className="w-4 h-4 text-accent-coral" />
+                    <MapPin className="w-4 h-4 text-muted-foreground" />
                     <span className="text-xs font-semibold">Toronto, ON</span>
                   </div>
                 </div>
@@ -233,7 +301,7 @@ function ProfileContent() {
                 <button
                   onClick={() => setShowSettings(!showSettings)}
                   className={`px-4 py-3 rounded-xl font-bold text-sm transition-colors ${
-                    showSettings ? "bg-primary text-white" : "bg-gray-100 dark:bg-muted hover:bg-gray-200 dark:hover:bg-border"
+                    showSettings ? "bg-primary text-primary-foreground" : "bg-gray-100 dark:bg-muted hover:bg-gray-200 dark:hover:bg-border"
                   }`}
                 >
                   <Settings className="w-5 h-5" />
@@ -313,7 +381,7 @@ function ProfileContent() {
 
         <section className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 mb-8 md:mb-12">
           <div className="bg-white dark:bg-card p-4 md:p-6 rounded-xl subtle-float border border-gray-100 dark:border-border flex items-center gap-3 md:gap-5">
-            <div className="w-10 h-10 md:w-14 md:h-14 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+            <div className="w-10 h-10 md:w-14 md:h-14 rounded-xl bg-muted text-foreground flex items-center justify-center shrink-0">
               <ShoppingBag className="w-5 h-5 md:w-7 md:h-7" />
             </div>
             <div>
@@ -322,7 +390,7 @@ function ProfileContent() {
             </div>
           </div>
           <div className="bg-white dark:bg-card p-4 md:p-6 rounded-xl subtle-float border border-gray-100 dark:border-border flex items-center gap-3 md:gap-5">
-            <div className="w-10 h-10 md:w-14 md:h-14 rounded-xl bg-accent-mint/10 text-accent-mint flex items-center justify-center shrink-0">
+            <div className="w-10 h-10 md:w-14 md:h-14 rounded-xl bg-muted text-foreground flex items-center justify-center shrink-0">
               <CheckCircle className="w-5 h-5 md:w-7 md:h-7" />
             </div>
             <div>
@@ -331,7 +399,7 @@ function ProfileContent() {
             </div>
           </div>
           <div className="bg-white dark:bg-card p-4 md:p-6 rounded-xl subtle-float border border-gray-100 dark:border-border flex items-center gap-3 md:gap-5">
-            <div className="w-10 h-10 md:w-14 md:h-14 rounded-xl bg-red-50 dark:bg-red-500/10 text-red-500 flex items-center justify-center shrink-0">
+            <div className="w-10 h-10 md:w-14 md:h-14 rounded-xl bg-muted text-foreground flex items-center justify-center shrink-0">
               <Heart className="w-5 h-5 md:w-7 md:h-7" />
             </div>
             <div>
@@ -340,7 +408,7 @@ function ProfileContent() {
             </div>
           </div>
           <div className="bg-white dark:bg-card p-4 md:p-6 rounded-xl subtle-float border border-gray-100 dark:border-border flex items-center gap-3 md:gap-5">
-            <div className="w-10 h-10 md:w-14 md:h-14 rounded-xl bg-accent-coral/10 text-accent-coral flex items-center justify-center shrink-0">
+            <div className="w-10 h-10 md:w-14 md:h-14 rounded-xl bg-muted text-foreground flex items-center justify-center shrink-0">
               <Calendar className="w-5 h-5 md:w-7 md:h-7" />
             </div>
             <div>
@@ -412,7 +480,7 @@ function ProfileContent() {
                     onClick={() => setShowFilters(!showFilters)}
                     className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-sm font-semibold transition-colors ${
                       hasActiveFilters
-                        ? "bg-primary text-white border-primary"
+                        ? "bg-primary text-primary-foreground border-primary"
                         : "bg-white dark:bg-card border-gray-100 dark:border-border hover:bg-gray-50 dark:hover:bg-muted"
                     }`}
                   >
@@ -491,7 +559,7 @@ function ProfileContent() {
           {activeTab === "saved" ? (
             savedListings && savedListings.length > 0 ? (
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-6">
-                {savedListings.map((listing) => (
+                {savedListings.filter((listing): listing is NonNullable<typeof listing> => listing !== null).map((listing) => (
                   <ListingCard
                     key={listing._id}
                     id={listing._id}
@@ -513,7 +581,7 @@ function ProfileContent() {
                 <p className="text-muted-foreground font-medium">No saved items yet</p>
                 <Link
                   href="/"
-                  className="inline-block mt-4 px-6 py-2 bg-primary text-white rounded-xl font-bold text-sm hover:bg-primary/90 transition-colors"
+                  className="inline-block mt-4 px-6 py-2 bg-primary text-primary-foreground rounded-xl font-bold text-sm hover:bg-primary/90 transition-colors"
                 >
                   Browse Marketplace
                 </Link>
@@ -601,7 +669,7 @@ function ProfileContent() {
               {activeTab === "active" && (
                 <Link
                   href="/sell"
-                  className="inline-block mt-4 px-6 py-2 bg-primary text-white rounded-xl font-bold text-sm hover:bg-primary/90 transition-colors"
+                  className="inline-block mt-4 px-6 py-2 bg-primary text-primary-foreground rounded-xl font-bold text-sm hover:bg-primary/90 transition-colors"
                 >
                   Create your first listing
                 </Link>
@@ -676,7 +744,7 @@ function ProfileContent() {
                 </p>
                 <a
                   href="mailto:support@gbcmarket.ca"
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg text-sm font-bold hover:bg-primary/90 transition-colors"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-bold hover:bg-primary/90 transition-colors"
                 >
                   <HelpCircle className="w-4 h-4" />
                   support@gbcmarket.ca

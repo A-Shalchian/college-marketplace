@@ -28,7 +28,7 @@ const campuses = [
   "Waterfront Campus",
 ];
 
-const MAX_FILE_SIZE = 5 * 1024 * 1024;
+const MAX_FILE_SIZE = 2 * 1024 * 1024;
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
 const MAX_IMAGES = 10;
 
@@ -90,7 +90,7 @@ function EditListingContent({ id }: { id: string }) {
       }
       if (file.size > MAX_FILE_SIZE) {
         const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
-        alert(`"${file.name}" is too large (${sizeMB}MB). Maximum size is 5MB.`);
+        alert(`"${file.name}" is too large (${sizeMB}MB). Maximum size is 2MB.`);
         continue;
       }
       if (file.size === 0) {
@@ -130,7 +130,7 @@ function EditListingContent({ id }: { id: string }) {
       }
       if (file.size > MAX_FILE_SIZE) {
         const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
-        alert(`"${file.name}" is too large (${sizeMB}MB). Maximum size is 5MB.`);
+        alert(`"${file.name}" is too large (${sizeMB}MB). Maximum size is 2MB.`);
         continue;
       }
       if (file.size === 0) {
@@ -208,7 +208,7 @@ function EditListingContent({ id }: { id: string }) {
       }
       if (file.size > MAX_FILE_SIZE) {
         const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
-        newErrors.images = `File "${file.name}" is too large (${sizeMB}MB). Maximum size is 5MB.`;
+        newErrors.images = `File "${file.name}" is too large (${sizeMB}MB). Maximum size is 2MB.`;
         break;
       }
       if (file.size === 0) {
@@ -364,7 +364,7 @@ function EditListingContent({ id }: { id: string }) {
             <button
               onClick={handleSubmit}
               disabled={!isFormValid || isSubmitting}
-              className="flex items-center justify-center rounded-xl h-11 px-6 md:px-8 bg-primary text-white text-sm font-bold shadow-lg shadow-primary/20 hover:brightness-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center justify-center rounded-xl h-11 px-6 md:px-8 bg-primary text-primary-foreground text-sm font-bold shadow-sm hover:brightness-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSubmitting ? (
                 <>
@@ -658,7 +658,7 @@ function EditListingContent({ id }: { id: string }) {
             <button
               type="submit"
               disabled={!isFormValid || isSubmitting}
-              className="px-8 md:px-10 py-3 md:py-4 bg-primary text-white font-bold rounded-xl shadow-xl shadow-primary/25 hover:scale-[1.02] transition-transform flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+              className="px-8 md:px-10 py-3 md:py-4 bg-primary text-primary-foreground font-bold rounded-xl shadow-sm hover:scale-[1.02] transition-transform flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
             >
               {isSubmitting ? (
                 <>

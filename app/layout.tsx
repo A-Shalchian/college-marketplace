@@ -5,6 +5,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { ConvexClientProvider } from "@/components/providers/convex-provider";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { WebsiteJsonLd } from "./json-ld";
+import { Toaster } from "sonner";
 
 const jakarta = Plus_Jakarta_Sans({
   variable: "--font-jakarta",
@@ -63,6 +64,7 @@ export default function RootLayout({
         >
           <ThemeProvider>
             <ConvexClientProvider>{children}</ConvexClientProvider>
+            <Toaster position="bottom-right" richColors closeButton />
           </ThemeProvider>
         </ClerkProvider>
       </body>

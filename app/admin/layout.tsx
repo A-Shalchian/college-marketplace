@@ -56,7 +56,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </p>
           <Link
             href="/"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-xl font-bold hover:bg-primary/90 transition-colors"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-xl font-bold hover:bg-primary/90 transition-colors"
           >
             <ChevronLeft className="w-4 h-4" />
             Back to Home
@@ -116,7 +116,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 onClick={() => setSidebarOpen(false)}
                 className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${
                   isActive
-                    ? "bg-primary text-white"
+                    ? "bg-primary text-primary-foreground"
                     : "text-muted-foreground hover:bg-gray-100 dark:hover:bg-muted hover:text-foreground"
                 }`}
               >

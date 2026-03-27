@@ -69,7 +69,7 @@ function ForumsContent() {
       general: "bg-primary/10 text-primary",
       course_help: "bg-accent-mint/10 text-accent-mint",
       housing: "bg-accent-coral/10 text-accent-coral",
-      campus_life: "bg-primary/10 text-[#4a8ebf]",
+      campus_life: "bg-primary/10 text-muted-foreground",
     };
     return colors[id] || "bg-gray-100 text-gray-700 dark:bg-muted dark:text-muted-foreground";
   };
@@ -93,7 +93,7 @@ function ForumsContent() {
           {isAuthenticated && (
             <Link
               href="/community/forums/create"
-              className="flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-primary/90 transition-all"
+              className="flex items-center gap-2 bg-primary text-primary-foreground px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-primary/90 transition-all"
             >
               New Post
             </Link>
@@ -118,7 +118,7 @@ function ForumsContent() {
               onClick={() => setSelectedCategory(cat.id)}
               className={`px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-colors ${
                 selectedCategory === cat.id
-                  ? "bg-primary text-white"
+                  ? "bg-primary text-primary-foreground"
                   : "bg-gray-100 dark:bg-muted text-gray-600 dark:text-muted-foreground hover:bg-gray-200 dark:hover:bg-border"
               }`}
             >
@@ -191,7 +191,7 @@ function ForumsContent() {
             {isAuthenticated && (
               <Link
                 href="/community/forums/create"
-                className="inline-block mt-4 px-6 py-2 bg-primary text-white rounded-xl font-bold text-sm hover:bg-primary/90 transition-colors"
+                className="inline-block mt-4 px-6 py-2 bg-primary text-primary-foreground rounded-xl font-bold text-sm hover:bg-primary/90 transition-colors"
               >
                 Create a Post
               </Link>

@@ -30,17 +30,16 @@ export const getClubs = query({
     if (args.category) {
       clubs = await ctx.db
         .query("clubs")
-        .withIndex("by_created")
+        .withIndex("by_status", (q) => q.eq("status", "active"))
         .order("desc")
-        .collect();
-      clubs = clubs.filter((c) => c.category === args.category && c.status === "active");
+        .take(100);
+      clubs = clubs.filter((c) => c.category === args.category);
     } else {
       clubs = await ctx.db
         .query("clubs")
-        .withIndex("by_created")
+        .withIndex("by_status", (q) => q.eq("status", "active"))
         .order("desc")
-        .collect();
-      clubs = clubs.filter((c) => c.status === "active");
+        .take(100);
     }
 
     if (args.campus) {

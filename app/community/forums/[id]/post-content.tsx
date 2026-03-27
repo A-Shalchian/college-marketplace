@@ -204,7 +204,7 @@ export function PostContent({
       general: "bg-primary/10 text-primary",
       course_help: "bg-accent-mint/10 text-accent-mint",
       housing: "bg-accent-coral/10 text-accent-coral",
-      campus_life: "bg-primary/10 text-[#4a8ebf]",
+      campus_life: "bg-primary/10 text-muted-foreground",
     };
     return (
       colors[cat] ||
@@ -279,7 +279,7 @@ export function PostContent({
                 <button
                   type="submit"
                   disabled={isEditPostSubmitting || !editPostTitle.trim() || !editPostContent.trim()}
-                  className="flex items-center gap-2 bg-primary text-white px-5 py-2 rounded-xl font-bold text-sm hover:bg-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex items-center gap-2 bg-primary text-primary-foreground px-5 py-2 rounded-xl font-bold text-sm hover:bg-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isEditPostSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save"}
                 </button>
@@ -468,7 +468,7 @@ export function PostContent({
                               <button
                                 type="submit"
                                 disabled={isEditReplySubmitting || !editReplyContent.trim()}
-                                className="flex items-center gap-1.5 bg-primary text-white px-3 py-1.5 rounded-lg font-bold text-xs hover:bg-primary/90 transition-all disabled:opacity-50"
+                                className="flex items-center gap-1.5 bg-primary text-primary-foreground px-3 py-1.5 rounded-lg font-bold text-xs hover:bg-primary/90 transition-all disabled:opacity-50"
                               >
                                 {isEditReplySubmitting ? <Loader2 className="w-3 h-3 animate-spin" /> : "Save"}
                               </button>
@@ -558,7 +558,7 @@ export function PostContent({
                   <button
                     type="submit"
                     disabled={isSubmitting || !replyContent.trim()}
-                    className="flex items-center gap-2 bg-primary text-white px-5 py-2 rounded-xl font-bold text-sm hover:bg-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex items-center gap-2 bg-primary text-primary-foreground px-5 py-2 rounded-xl font-bold text-sm hover:bg-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isSubmitting ? (
                       <Loader2 className="w-4 h-4 animate-spin" />

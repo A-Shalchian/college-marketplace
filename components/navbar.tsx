@@ -73,14 +73,14 @@ export function Navbar() {
     : "?";
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-white/80 dark:bg-[#0f1419] backdrop-blur-md border-b border-gray-100 dark:border-border">
+    <header className="sticky top-0 z-50 w-full bg-white/80 dark:bg-background/80 backdrop-blur-md border-b border-gray-100 dark:border-border">
       <div className="max-w-[1280px] mx-auto px-6 h-20 flex items-center justify-between gap-8">
         <Link href="/" className="flex items-center gap-3 shrink-0">
-          <div className="bg-primary p-2 rounded-lg text-white">
+          <div className="bg-foreground p-2 rounded-lg text-background">
             <Store className="w-6 h-6" />
           </div>
-          <h1 className="text-xl font-bold tracking-tight text-primary">
-            GBC<span className="text-foreground">Market</span>
+          <h1 className="text-xl font-bold tracking-tight">
+            GBC<span className="text-muted-foreground">Market</span>
           </h1>
         </Link>
 
@@ -106,19 +106,19 @@ export function Navbar() {
               <nav className="hidden lg:flex items-center gap-6">
                 <Link
                   href="/profile#listings"
-                  className="text-sm font-semibold hover:text-primary transition-colors"
+                  className="text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors"
                 >
                   My Listings
                 </Link>
                 <Link
                   href="/community"
-                  className="text-sm font-semibold hover:text-primary transition-colors"
+                  className="text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors"
                 >
                   Community
                 </Link>
                 <Link
                   href="/messages"
-                  className="text-sm font-semibold hover:text-primary transition-colors relative"
+                  className="text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors relative"
                 >
                   Messages
                   {unreadCount !== undefined && unreadCount > 0 && (
@@ -131,7 +131,7 @@ export function Navbar() {
               <div className="h-8 w-[1px] bg-gray-200 dark:bg-border hidden lg:block" />
               <Link
                 href="/sell"
-                className="hidden md:flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-primary/90 transition-all shadow-lg shadow-primary/20"
+                className="hidden md:flex items-center gap-2 bg-primary text-primary-foreground px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-primary/90 transition-all shadow-sm"
               >
                 <PlusCircle className="w-[18px] h-[18px]" />
                 <span>Post Item</span>
@@ -150,11 +150,11 @@ export function Navbar() {
                         className="w-10 h-10 rounded-full border-2 border-white dark:border-card object-cover"
                       />
                     ) : (
-                      <div className="w-10 h-10 rounded-full border-2 border-white dark:border-card bg-primary text-white flex items-center justify-center font-bold text-sm">
+                      <div className="w-10 h-10 rounded-full border-2 border-white dark:border-card bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm">
                         {userInitial}
                       </div>
                     )}
-                    <div className="absolute bottom-0 right-0 w-3 h-3 bg-accent-mint border-2 border-white dark:border-card rounded-full" />
+                    <div className="absolute bottom-0 right-0 w-3 h-3 bg-foreground border-2 border-white dark:border-card rounded-full" />
                   </div>
                   <ChevronDown className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors hidden lg:block" />
                 </button>
@@ -191,7 +191,7 @@ export function Navbar() {
           ) : isLoading ? null : (
             <Link
               href="/sign-in"
-              className="flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-primary/90 transition-all shadow-lg shadow-primary/20"
+              className="flex items-center gap-2 bg-primary text-primary-foreground px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-primary/90 transition-all shadow-sm"
             >
               Sign In
             </Link>
@@ -212,7 +212,7 @@ export function Navbar() {
       </div>
 
       {mobileMenuOpen && (
-        <div className="md:hidden bg-white dark:bg-[#0f1419] border-b border-gray-100 dark:border-border">
+        <div className="md:hidden bg-white dark:bg-background border-b border-gray-100 dark:border-border">
           <div className="px-6 py-4 space-y-4">
             <form onSubmit={handleSearch} className="relative">
               <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-muted-foreground">
@@ -300,7 +300,7 @@ export function Navbar() {
                   <Link
                     href="/sign-in"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="w-full flex items-center justify-center gap-2 bg-primary text-white px-5 py-3 rounded-xl font-bold text-sm hover:bg-primary/90 transition-all"
+                    className="w-full flex items-center justify-center gap-2 bg-primary text-primary-foreground px-5 py-3 rounded-xl font-bold text-sm hover:bg-primary/90 transition-all"
                   >
                     Sign In
                   </Link>

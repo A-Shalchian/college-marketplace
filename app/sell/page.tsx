@@ -19,6 +19,7 @@ import {
   Upload,
 } from "lucide-react";
 import Link from "next/link";
+import { toast } from "sonner";
 
 const conditions = ["New", "Like New", "Good", "Fair"];
 const campuses = [
@@ -27,9 +28,46 @@ const campuses = [
   "Waterfront Campus",
 ];
 
-const MAX_FILE_SIZE = 5 * 1024 * 1024;
+const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB after compression
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
 const MAX_IMAGES = 10;
+const COMPRESS_MAX_WIDTH = 1200;
+const COMPRESS_QUALITY = 0.8;
+
+async function compressImage(file: File): Promise<File> {
+  if (file.size <= MAX_FILE_SIZE) return file;
+
+  return new Promise((resolve) => {
+    const img = new window.Image();
+    img.onload = () => {
+      URL.revokeObjectURL(img.src);
+      const canvas = document.createElement("canvas");
+      let { width, height } = img;
+
+      if (width > COMPRESS_MAX_WIDTH) {
+        height = Math.round((height * COMPRESS_MAX_WIDTH) / width);
+        width = COMPRESS_MAX_WIDTH;
+      }
+
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) { resolve(file); return; }
+
+      ctx.drawImage(img, 0, 0, width, height);
+      canvas.toBlob(
+        (blob) => {
+          if (!blob || blob.size >= file.size) { resolve(file); return; }
+          resolve(new File([blob], file.name, { type: "image/jpeg", lastModified: Date.now() }));
+        },
+        "image/jpeg",
+        COMPRESS_QUALITY
+      );
+    };
+    img.onerror = () => resolve(file);
+    img.src = URL.createObjectURL(file);
+  });
+}
 
 const campusMapUrls: Record<string, string> = {
   "St. James Campus": "https://maps.google.com/maps?q=George+Brown+College+St+James+Campus,Toronto&z=15&output=embed",
@@ -132,7 +170,7 @@ function SellContent() {
       }
       if (file.size > MAX_FILE_SIZE) {
         const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
-        alert(`"${file.name}" is too large (${sizeMB}MB). Maximum size is 5MB.`);
+        alert(`"${file.name}" is too large (${sizeMB}MB). Maximum size is 2MB.`);
         continue;
       }
       if (file.size === 0) {
@@ -177,7 +215,7 @@ function SellContent() {
       }
       if (file.size > MAX_FILE_SIZE) {
         const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
-        alert(`"${file.name}" is too large (${sizeMB}MB). Maximum size is 5MB.`);
+        alert(`"${file.name}" is too large (${sizeMB}MB). Maximum size is 2MB.`);
         continue;
       }
       if (file.size === 0) {
@@ -253,7 +291,7 @@ function SellContent() {
       }
       if (file.size > MAX_FILE_SIZE) {
         const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
-        newErrors.images = `File "${file.name}" is too large (${sizeMB}MB). Maximum size is 5MB.`;
+        newErrors.images = `File "${file.name}" is too large (${sizeMB}MB). Maximum size is 2MB.`;
         break;
       }
       if (file.size === 0) {
@@ -274,11 +312,12 @@ function SellContent() {
     setIsSubmitting(true);
     try {
       const uploadPromises = imageFiles.map(async (file) => {
+        const compressed = await compressImage(file);
         const uploadUrl = await generateUploadUrl({ userId: currentUser._id });
         const result = await fetch(uploadUrl, {
           method: "POST",
-          headers: { "Content-Type": file.type },
-          body: file,
+          headers: { "Content-Type": compressed.type },
+          body: compressed,
         });
         const { storageId } = await result.json();
         return storageId;
@@ -298,10 +337,11 @@ function SellContent() {
       });
 
       localStorage.removeItem("listingDraft");
+      toast.success("Listing published!");
       router.push("/");
     } catch (error) {
       console.error("Failed to create listing:", error);
-      alert("Failed to create listing. Please try again.");
+      toast.error("Failed to create listing. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -318,7 +358,7 @@ function SellContent() {
           <p className="text-gray-500">Please sign in to create a listing</p>
           <Link
             href="/sign-in"
-            className="inline-block mt-4 px-6 py-2 bg-primary text-white rounded-xl font-bold"
+            className="inline-block mt-4 px-6 py-2 bg-primary text-primary-foreground rounded-xl font-bold"
           >
             Sign In
           </Link>
@@ -380,7 +420,7 @@ function SellContent() {
             <button
               onClick={handleSubmit}
               disabled={!isFormValid || isSubmitting}
-              className="flex items-center justify-center rounded-xl h-11 px-6 md:px-8 bg-primary text-white text-sm font-bold shadow-lg shadow-primary/20 hover:brightness-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center justify-center rounded-xl h-11 px-6 md:px-8 bg-primary text-primary-foreground text-sm font-bold shadow-sm hover:brightness-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSubmitting ? (
                 <>
@@ -677,7 +717,7 @@ function SellContent() {
             <button
               type="submit"
               disabled={!isFormValid || isSubmitting}
-              className="px-8 md:px-10 py-3 md:py-4 bg-primary text-white font-bold rounded-xl shadow-xl shadow-primary/25 hover:scale-[1.02] transition-transform flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+              className="px-8 md:px-10 py-3 md:py-4 bg-primary text-primary-foreground font-bold rounded-xl shadow-sm hover:scale-[1.02] transition-transform flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
             >
               {isSubmitting ? (
                 <>

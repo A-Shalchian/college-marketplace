@@ -44,7 +44,7 @@ export function ListingCard({
       <div className="subtle-float bg-white dark:bg-card rounded-xl overflow-hidden group border border-transparent dark:border-border">
         <div className="relative aspect-square">
           <div className="absolute top-3 left-3 z-10">
-            <span className="bg-primary text-white text-xs font-bold px-2.5 py-1 rounded-lg">
+            <span className="bg-primary text-primary-foreground text-xs font-bold px-2.5 py-1 rounded-lg">
               ${price}
             </span>
           </div>
@@ -68,9 +68,12 @@ export function ListingCard({
             </button>
           </div>
           {images[0] ? (
-            <div
-              className="w-full h-full bg-center bg-cover group-hover:scale-105 transition-transform duration-500"
-              style={{ backgroundImage: `url(${images[0]})` }}
+            <img
+              src={images[0]}
+              alt={title}
+              loading="lazy"
+              decoding="async"
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
             />
           ) : (
             <div className="w-full h-full bg-gray-100 dark:bg-muted flex items-center justify-center text-muted-foreground">
@@ -108,15 +111,15 @@ export function ListingCard({
 function getConditionStyle(condition: string): string {
   const lower = condition.toLowerCase();
   if (lower.includes("new") || lower.includes("mint") || lower.includes("like new")) {
-    return "bg-accent-mint/90 text-primary";
+    return "bg-emerald-500/90 text-white";
   }
   if (lower.includes("good")) {
-    return "bg-accent-coral/20 text-accent-coral";
+    return "bg-amber-500/90 text-white";
   }
   if (lower.includes("fair")) {
-    return "bg-accent-coral/20 text-accent-coral";
+    return "bg-orange-500/90 text-white";
   }
-  return "bg-white/90 text-primary";
+  return "bg-white/90 text-foreground";
 }
 
 function getTimeAgo(timestamp: number): string {
